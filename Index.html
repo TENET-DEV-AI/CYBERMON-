@@ -2,925 +2,1534 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>CYBERMON</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>CYBERMON — Live Cyber Intel</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;700&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
 <style>
 :root{
-  --bg:#03070a;--s1:#060e14;--b0:#0a1e2b;--b1g:#0e3a52;
-  --cyan:#00d4ff;--cm:#006680;
-  --red:#ff2545;--ora:#ff7b00;--grn:#00ff88;--yel:#ffd60a;--pur:#bf5af2;
-  --tx:#6ba8bc;--thi:#bfe0ec;--tlo:#1b3a4a;
+  --bg:#05080d;--p1:#0a0e16;--p2:#0e1520;
+  --bd:rgba(0,200,255,.09);--bd2:rgba(0,200,255,.2);
+  --tx:#c0d8f0;--mu:#2a4466;--mu2:#0c1624;
+  --red:#ff2d2d;--org:#ff6a00;--amb:#ffc200;
+  --grn:#00e676;--blu:#1e90ff;--pur:#c026d3;--cyn:#00d4ff;--teal:#00b09b;
+  --dw:#cc0000;--acc:#00d4ff;
+  --mono:'Share Tech Mono',monospace;
+  --hdr:'Barlow Condensed',sans-serif;
+  --ui:'Rajdhani',sans-serif;
 }
-*{margin:0;padding:0;box-sizing:border-box}
-html{height:100%}
-body{
-  font-family:'Share Tech Mono',monospace;color:var(--tx);
-  background:var(--bg);
-  height:100%;
-  display:flex;flex-direction:column;
-  overflow:hidden;
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:rgba(0,0,0,0)}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--ui);overflow:hidden}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--mu2)}
+
+/* ── GATE ─────────────────────────────────────────────────── */
+#oib{display:none;position:fixed;inset:0;z-index:99999;
+  background:rgba(5,8,13,.98);flex-direction:column;align-items:center;
+  justify-content:center;padding:28px;text-align:center;gap:18px}
+#oib.show{display:flex}
+.oib-ico{font-size:52px}
+.oib-title{font-family:var(--hdr);font-size:26px;font-weight:800;letter-spacing:3px;color:var(--acc)}
+.oib-msg{font-size:14px;color:var(--tx);line-height:1.7;max-width:380px}
+.oib-step{background:var(--p1);border:1px solid var(--bd2);border-radius:8px;padding:14px 18px;
+  width:100%;max-width:380px;font-size:13px;color:var(--mu);line-height:1.9;text-align:left}
+.oib-step b{color:var(--acc);font-family:var(--mono)}
+.oib-url{background:var(--p2);border:1px solid var(--acc);border-radius:6px;padding:10px 14px;
+  font-family:var(--mono);font-size:11px;color:var(--acc);word-break:break-all;max-width:380px;cursor:pointer;width:100%}
+.oib-copy{background:var(--acc);color:#000;border:none;border-radius:6px;padding:12px 24px;
+  font-size:14px;font-weight:700;font-family:var(--hdr);letter-spacing:2px;cursor:pointer;width:100%;max-width:380px}
+.oib-sub{font-size:11px;color:var(--mu);font-family:var(--mono)}
+
+/* ── TOP BAR ─────────────────────────────────────────────── */
+#bar{position:fixed;top:0;left:0;right:0;height:48px;z-index:999;
+  background:rgba(5,8,13,.98);border-bottom:1px solid var(--bd2);
+  display:flex;align-items:center;padding:0 12px;gap:0}
+.brand{display:flex;align-items:center;gap:8px;flex-shrink:0;margin-right:10px}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red);animation:pls 1.8s ease-in-out infinite}
+@keyframes pls{0%,100%{opacity:1}50%{opacity:.3}}
+.bname{font-family:var(--hdr);font-size:19px;font-weight:800;letter-spacing:4px;color:var(--acc)}
+.bver{font-size:7px;color:var(--mu);font-family:var(--mono);align-self:flex-end;margin-bottom:3px}
+.stats{flex:1;display:flex;align-items:center;overflow:hidden}
+.st{display:flex;align-items:center;gap:4px;padding:0 10px;border-right:1px solid var(--bd);height:48px;white-space:nowrap;flex-shrink:0}
+.st:last-child{border:none}
+.sdot{width:5px;height:5px;border-radius:50%}
+.slbl{font-size:7px;color:var(--mu);font-family:var(--mono)}
+.sval{font-size:13px;font-weight:700;font-family:var(--mono)}
+.bar-r{display:flex;align-items:center;gap:8px;flex-shrink:0;padding-left:8px}
+#utc{font-size:9px;font-family:var(--mono);color:var(--acc)}
+.live-b{display:flex;align-items:center;gap:3px;padding:3px 8px;border-radius:2px;
+  background:rgba(255,45,45,.1);border:1px solid rgba(255,45,45,.3);
+  font-size:7px;letter-spacing:1.5px;color:var(--red);font-family:var(--mono)}
+.blnk{width:4px;height:4px;border-radius:50%;background:var(--red);animation:bk 1s step-end infinite}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── MAIN SHELL ──────────────────────────────────────────── */
+#shell{position:fixed;top:48px;left:0;right:0;bottom:0;display:flex;flex-direction:column}
+
+/* ── SOURCE BAR ─────────────────────────────────────────── */
+#srcbar{flex-shrink:0;height:26px;display:flex;align-items:center;
+  background:var(--p1);border-bottom:1px solid var(--bd);overflow-x:auto;padding:0 8px}
+#srcbar::-webkit-scrollbar{display:none}
+.src{display:flex;align-items:center;gap:3px;padding:0 8px;border-right:1px solid var(--bd);
+  height:26px;white-space:nowrap;flex-shrink:0}
+.src:last-child{border:none}
+.srcd{width:5px;height:5px;border-radius:50%;transition:background .4s}
+.srct{font-size:7.5px;font-family:var(--mono);transition:color .4s}
+
+/* ── DESKTOP LAYOUT: 3-COLUMN ────────────────────────────── */
+#desktop-body{flex:1;min-height:0;display:none;gap:0}
+@media(min-width:900px){
+  #desktop-body{display:flex}
+  #mobile-body{display:none}
 }
-body::before{
-  content:'';position:fixed;inset:0;
-  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px);
-  pointer-events:none;z-index:9000;
+
+/* Left sidebar */
+#col-left{width:300px;flex-shrink:0;display:flex;flex-direction:column;
+  border-right:1px solid var(--bd);overflow:hidden}
+/* Center: map + panels */
+#col-center{flex:1;min-width:0;display:flex;flex-direction:column}
+/* Right sidebar */
+#col-right{width:320px;flex-shrink:0;display:flex;flex-direction:column;
+  border-left:1px solid var(--bd);overflow:hidden}
+
+/* Larger map on desktop */
+#mapw{flex-shrink:0;position:relative;overflow:hidden;background:#020406}
+#mapw.desktop{height:340px}
+#msvg{position:absolute;inset:0;width:100%;height:100%}
+#acvs{position:absolute;inset:0;pointer-events:none;z-index:3}
+#pngl{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+#dotl{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden}
+#mapw::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(ellipse at 50% 45%,transparent 28%,rgba(2,4,6,.78) 100%)}
+#ticker{position:absolute;top:0;left:0;right:0;height:22px;z-index:10;
+  display:flex;align-items:center;overflow:hidden;background:rgba(2,4,6,.95);border-bottom:1px solid var(--bd)}
+.tlbl{height:22px;padding:0 9px;font-size:7px;letter-spacing:2px;font-family:var(--mono);
+  font-weight:700;color:#000;background:var(--red);display:flex;align-items:center;flex-shrink:0}
+#tscrl{display:flex;white-space:nowrap;gap:50px;padding-left:10px;
+  font-size:8px;color:var(--mu);font-family:var(--mono);animation:tsc 100s linear infinite}
+@keyframes tsc{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+#mleg{position:absolute;bottom:0;left:0;right:0;height:22px;z-index:10;
+  display:flex;align-items:center;padding:0 8px;gap:10px;
+  background:rgba(2,4,6,.93);border-top:1px solid var(--bd)}
+.mli{display:flex;align-items:center;gap:3px;font-size:7.5px;color:var(--mu);font-family:var(--mono)}
+.mld{width:6px;height:6px;border-radius:50%}
+.pw{position:absolute}
+.pc{position:absolute;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.pr{position:absolute;top:50%;left:50%;border-radius:50%;border:1.5px solid;
+  transform:translate(-50%,-50%);animation:pra 2s ease-out forwards}
+@keyframes pra{0%{width:4px;height:4px;opacity:.9}100%{width:26px;height:26px;opacity:0}}
+
+/* Desktop center bottom panel tabs */
+#center-tabs{flex-shrink:0;display:flex;background:var(--p1);border-bottom:1px solid var(--bd)}
+.ctab{flex:1;padding:0 4px;font-size:8px;text-transform:uppercase;font-family:var(--mono);
+  color:var(--mu);border:none;background:none;cursor:pointer;
+  border-bottom:2px solid transparent;height:32px;display:flex;align-items:center;
+  justify-content:center;transition:all .12s;white-space:nowrap;letter-spacing:.5px}
+.ctab.on{color:var(--acc);border-bottom-color:var(--acc)}
+#center-panel{flex:1;min-height:0;position:relative;overflow:hidden}
+.cpanel{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .12s}
+.cpanel.on{opacity:1;pointer-events:all}
+
+/* ── SIDEBAR PANELS ─────────────────────────────────────── */
+.scol-hdr{flex-shrink:0;padding:6px 10px;background:var(--bg);border-bottom:1px solid var(--bd2);
+  display:flex;align-items:center;justify-content:space-between;min-height:32px}
+.scol-title{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--mu);text-transform:uppercase}
+.scol-body{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.stabs{flex-shrink:0;display:flex;border-bottom:1px solid var(--bd)}
+.stab{flex:1;padding:0 2px;font-size:7px;text-transform:uppercase;font-family:var(--mono);
+  color:var(--mu);border:none;background:none;cursor:pointer;height:28px;
+  border-bottom:2px solid transparent;transition:all .12s;display:flex;align-items:center;justify-content:center}
+.stab.on{color:var(--acc);border-bottom-color:var(--acc)}
+
+/* ── MOBILE LAYOUT ──────────────────────────────────────── */
+#mobile-body{flex:1;min-height:0;display:flex;flex-direction:column}
+@media(min-width:900px){#mobile-body{display:none}}
+
+#mapw-mob{flex-shrink:0;position:relative;overflow:hidden;background:#020406;height:200px}
+#mapw-mob::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:radial-gradient(ellipse at 50% 45%,transparent 28%,rgba(2,4,6,.78) 100%)}
+#msvg-mob{position:absolute;inset:0;width:100%;height:100%}
+#acvs-mob{position:absolute;inset:0;pointer-events:none;z-index:3}
+#pngl-mob{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+#dotl-mob{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden}
+#mob-ticker{position:absolute;top:0;left:0;right:0;height:20px;z-index:10;
+  display:flex;align-items:center;overflow:hidden;background:rgba(2,4,6,.95);border-bottom:1px solid var(--bd)}
+#mob-tscrl{display:flex;white-space:nowrap;gap:50px;padding-left:8px;
+  font-size:7.5px;color:var(--mu);font-family:var(--mono);animation:tsc 80s linear infinite}
+
+#panels{flex:1;min-height:0;position:relative}
+.panel{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;
+  opacity:0;pointer-events:none;transition:opacity .15s}
+.panel.active{opacity:1;pointer-events:all}
+#bnav{flex-shrink:0;height:52px;display:flex;background:rgba(5,8,13,.98);
+  border-top:1px solid var(--bd2);z-index:100}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;border:none;background:none;cursor:pointer;color:var(--mu);
+  font-size:6.5px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;
+  border-top:2px solid transparent;transition:all .15s}
+.bn .ico{font-size:17px;line-height:1}
+.bn.on{color:var(--acc);border-top-color:var(--acc)}
+
+/* ── SHARED COMPONENTS ──────────────────────────────────── */
+.ph{flex-shrink:0;padding:5px 10px;display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg);border-bottom:1px solid var(--bd);min-height:30px}
+.pt{font-family:var(--mono);font-size:8px;letter-spacing:1.5px;color:var(--mu);
+  text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.lvdot{font-size:6.5px;padding:1px 4px;border-radius:2px;
+  background:rgba(255,45,45,.08);border:1px solid rgba(255,45,45,.25);color:var(--red);font-family:var(--mono)}
+.cnt{font-size:8px;padding:1px 6px;border-radius:2px;background:var(--mu2);
+  color:var(--mu);font-family:var(--mono);min-width:20px;text-align:center}
+.tabs{flex-shrink:0;display:flex;border-bottom:1px solid var(--bd)}
+.tab{flex:1;padding:0 2px;font-size:7.5px;text-transform:uppercase;font-family:var(--mono);
+  color:var(--mu);border:none;background:none;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all .12s;
+  height:32px;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc)}
+.tab.tbeg{color:var(--teal);border-bottom-color:var(--teal)}
+.tab.tpro{color:var(--blu);border-bottom-color:var(--blu)}
+.tab.twar{color:var(--red);border-bottom-color:var(--red)}
+.pscroll{flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch}
+.mdesc{flex-shrink:0;padding:4px 10px;font-size:7.5px;color:var(--mu);
+  background:rgba(0,0,0,.2);border-bottom:1px solid var(--bd);line-height:1.5}
+
+/* ── CARDS ──────────────────────────────────────────────── */
+.card{padding:9px 10px;border-bottom:1px solid rgba(0,200,255,.05);cursor:pointer;transition:background .1s}
+.card:hover{background:var(--p1)}
+.ct{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.ctype{font-size:7px;font-weight:700;font-family:var(--mono);text-transform:uppercase}
+.ctime{font-size:7px;color:var(--mu);font-family:var(--mono)}
+.cvia{font-size:8px;color:var(--mu);font-family:var(--mono);margin-bottom:2px}
+.ctit{font-size:11px;color:var(--tx);line-height:1.35;margin-bottom:3px;font-weight:600}
+.cdesc{font-size:8.5px;color:var(--mu);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cbeg{font-size:8.5px;color:var(--teal);padding:4px 7px;
+  background:rgba(0,176,155,.07);border-left:2px solid var(--teal);margin:3px 0;line-height:1.45}
+.ctags{display:flex;gap:3px;margin-top:4px;flex-wrap:wrap}
+.ctag{font-size:7px;padding:1px 5px;border-radius:2px;border:1px solid;font-family:var(--mono)}
+.dcard{padding:9px 10px;border-bottom:1px solid rgba(139,0,0,.14);cursor:pointer;
+  background:rgba(35,0,0,.18);transition:background .1s}
+.dcard:hover{background:rgba(65,0,0,.3)}
+.dtop{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
+.dgrp{font-size:7px;font-weight:700;font-family:var(--mono);color:var(--dw)}
+.ddate{font-size:7px;color:var(--mu);font-family:var(--mono)}
+.dvic{font-size:11px;color:var(--tx);font-weight:600;margin-bottom:2px}
+.dmeta{font-size:8px;color:var(--mu);font-family:var(--mono)}
+.cvc{padding:7px 10px;border-bottom:1px solid rgba(0,200,255,.05);cursor:pointer;transition:background .1s}
+.cvc:hover{background:var(--p1)}
+.cvt{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
+.cvid{font-size:9px;font-weight:700;font-family:var(--mono);color:var(--cyn)}
+.cvsev{font-size:7px;padding:1px 5px;border-radius:2px;font-family:var(--mono);font-weight:700}
+.cvd{font-size:8.5px;color:var(--mu);line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:2px}
+.cvbeg{font-size:8px;color:var(--teal);padding:3px 6px;
+  background:rgba(0,176,155,.06);border-left:2px solid var(--teal);margin-bottom:2px;line-height:1.45}
+.cvmeta{font-size:7px;color:var(--mu2);font-family:var(--mono)}
+.ld{padding:12px 10px;display:flex;align-items:center;gap:7px;color:var(--mu);font-size:9px;font-family:var(--mono)}
+.sp{width:10px;height:10px;border:1.5px solid var(--mu2);border-top-color:var(--blu);
+  border-radius:50%;animation:spn .7s linear infinite;flex-shrink:0}
+@keyframes spn{to{transform:rotate(360deg)}}
+.ibox{margin:8px;padding:8px 10px;border-left:2px solid var(--blu);
+  background:rgba(30,144,255,.05);font-size:8.5px;color:var(--mu);line-height:1.6}
+.ibox a{color:var(--blu);text-decoration:none}
+.wbox{margin:8px;padding:8px 10px;border-left:2px solid var(--amb);
+  background:rgba(255,194,0,.05);font-size:8.5px;color:var(--mu);line-height:1.6}
+.wbox a{color:var(--amb);text-decoration:none}
+.ebox{margin:8px;padding:8px 10px;border-left:2px solid var(--red);
+  background:rgba(255,45,45,.05);font-size:8.5px;color:var(--mu);line-height:1.6}
+.ebox a{color:var(--red);text-decoration:none}
+.kinp{padding:8px 10px;border-bottom:1px solid var(--bd)}
+.klbl{font-size:7px;text-transform:uppercase;letter-spacing:1px;color:var(--mu);font-family:var(--mono);display:block;margin-bottom:4px}
+.krow{display:flex;gap:5px}
+.kin{flex:1;background:var(--bg);border:1px solid var(--bd2);color:var(--tx);padding:6px 8px;
+  font-size:9px;font-family:var(--mono);border-radius:2px;outline:none;height:38px}
+.kgo{padding:6px 12px;background:var(--acc);color:#000;border:none;border-radius:2px;
+  font-size:8px;font-family:var(--mono);cursor:pointer;font-weight:700;height:38px}
+
+/* ── STREAM CARDS ───────────────────────────────────────── */
+.stream-card{margin:8px;border:1px solid var(--bd2);border-radius:4px;overflow:hidden;background:var(--p1)}
+.stream-hdr{padding:6px 10px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--bd)}
+.stream-live{font-size:6px;padding:2px 5px;background:var(--red);color:#fff;font-family:var(--mono);
+  border-radius:2px;letter-spacing:1px;animation:bk 1s step-end infinite}
+.stream-title{font-size:10px;font-weight:700;color:var(--tx);flex:1}
+.stream-src{font-size:7px;color:var(--mu);font-family:var(--mono)}
+.stream-embed{position:relative;padding-bottom:56.25%;height:0;background:#000}
+.stream-embed iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+.stream-osint{padding:8px 10px}
+.stream-item{padding:5px 0;border-bottom:1px solid rgba(0,200,255,.05);cursor:pointer}
+.stream-item:hover{background:var(--p2)}
+.stream-item:last-child{border:none}
+.si-title{font-size:9px;color:var(--tx);line-height:1.3;margin-bottom:2px}
+.si-meta{font-size:7px;color:var(--mu);font-family:var(--mono)}
+.si-live{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--red);
+  margin-right:3px;animation:pls 1.5s ease-in-out infinite;vertical-align:middle}
+
+/* ── COUNTRY MODAL ──────────────────────────────────────── */
+#cmod{position:fixed;inset:0;z-index:9999;background:rgba(5,8,13,.98);
+  display:flex;flex-direction:column;overflow:hidden;
+  transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1)}
+#cmod.open{transform:translateY(0)}
+.cmh{flex-shrink:0;padding:12px 16px 10px;border-bottom:1px solid var(--bd2);
+  background:var(--bg);display:flex;align-items:flex-start;justify-content:space-between}
+.cmclose{background:var(--p2);border:1px solid var(--bd);color:var(--mu);
+  font-size:14px;width:36px;height:36px;border-radius:4px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:var(--mono)}
+.cmflag{font-size:28px;margin-bottom:4px}
+.cmname{font-size:22px;font-weight:800;font-family:var(--hdr);letter-spacing:1px;color:var(--tx)}
+.cmsub{font-size:8px;color:var(--mu);font-family:var(--mono);margin-top:2px}
+.cmbd{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media(min-width:900px){
+  #cmod{left:auto;right:0;width:420px;transform:translateX(100%)}
+  #cmod.open{transform:translateX(0)}
 }
-
-/* ── HEADER ── */
-#hdr{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 12px;height:44px;flex-shrink:0;
-  border-bottom:1px solid var(--b0);
-  background:linear-gradient(180deg,rgba(0,212,255,0.06)0%,transparent 100%);
-}
-.logo{display:flex;align-items:center;gap:8px}
-.lhex{
-  width:24px;height:24px;border:1.5px solid var(--cyan);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 12px rgba(0,212,255,0.5);
-  animation:lp 3s ease-in-out infinite;flex-shrink:0;
-}
-@keyframes lp{0%,100%{box-shadow:0 0 12px rgba(0,212,255,0.3)}50%{box-shadow:0 0 24px rgba(0,212,255,0.8)}}
-.lname{font-family:'Orbitron',monospace;font-weight:900;font-size:14px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 14px rgba(0,212,255,0.6)}
-.lsub{font-size:6px;letter-spacing:2px;color:var(--tlo)}
-.hstats{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
-.hst{text-align:center;min-width:38px}
-.hst-l{font-size:6px;letter-spacing:1px;color:var(--tlo);white-space:nowrap}
-.hst-v{font-family:'Orbitron',monospace;font-size:10px;color:var(--cyan)}
-.hbadge{display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--red);background:rgba(255,37,69,0.07);flex-shrink:0}
-.hbd{width:5px;height:5px;border-radius:50%;background:var(--red);animation:bl 1.1s step-end infinite}
-@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
-.hbt{font-size:7px;letter-spacing:2px;color:var(--red)}
-
-/* ── TICKER ── */
-#tkr{
-  display:flex;align-items:center;height:22px;flex-shrink:0;
-  border-bottom:1px solid var(--b0);overflow:hidden;background:rgba(0,0,0,0.3);
-}
-.tkrtag{padding:0 10px;font-size:7px;letter-spacing:2px;color:var(--bg);background:var(--cyan);height:100%;display:flex;align-items:center;flex-shrink:0;font-weight:bold}
-#tkr-inner{display:flex;white-space:nowrap;font-size:8px;gap:40px;padding-left:16px;animation:tkra 90s linear infinite}
-@keyframes tkra{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.ti{display:inline-flex;align-items:center;gap:5px}
-.tdt{width:4px;height:4px;border-radius:50%;flex-shrink:0}
-
-/* ── MAIN LAYOUT ── */
-#app{
-  flex:1;min-height:0;
-  display:grid;
-  grid-template-columns:220px 1fr 220px;
-  grid-template-rows:1fr;
-  overflow:hidden;
-}
-
-/* ── PANEL BASE ── */
-.pnl{border:1px solid var(--b0);background:var(--s1);display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.ph{display:flex;align-items:center;justify-content:space-between;padding:0 8px;height:26px;flex-shrink:0;border-bottom:1px solid var(--b0);background:rgba(0,212,255,0.015)}
-.pt{font-size:6px;letter-spacing:2px;color:var(--cyan);text-transform:uppercase}
-.pb{font-size:6px;padding:1px 5px;border:1px solid var(--b0);color:var(--cyan)}
-.pbody{flex:1;overflow-y:auto;min-height:0}
-.pbody::-webkit-scrollbar{width:2px}
-.pbody::-webkit-scrollbar-thumb{background:var(--b1g)}
-
-/* ── TABS ── */
-.tabs{display:flex;border-bottom:1px solid var(--b0);flex-shrink:0}
-.tab{padding:5px 10px;font-size:6px;letter-spacing:2px;color:var(--tlo);cursor:pointer;border-right:1px solid var(--b0);transition:color .15s}
-.tab.on{color:var(--cyan);border-bottom:2px solid var(--cyan);background:rgba(0,212,255,0.04)}
-.tview{display:none;flex:1;overflow-y:auto;min-height:0}
-.tview.on{display:flex;flex-direction:column}
-.tview::-webkit-scrollbar{width:2px}
-.tview::-webkit-scrollbar-thumb{background:var(--b1g)}
-
-/* ── LEFT FEED ── */
-.left{border-right:none}
-.fi{padding:7px 9px;border-bottom:1px solid rgba(10,30,43,0.7);display:flex;flex-direction:column;gap:2px;animation:fiin .2s ease}
-@keyframes fiin{from{opacity:0;transform:translateX(-3px)}to{opacity:1;transform:translateX(0)}}
-.fi-top{display:flex;justify-content:space-between;align-items:center;gap:4px}
-.fi-type{font-size:7px;font-weight:bold;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fi-ts{font-size:6px;color:var(--tlo);flex-shrink:0}
-.fi-src{font-size:7px;color:var(--tlo)}
-.fi-title{font-size:8px;color:var(--thi);line-height:1.3;margin-top:1px}
-.fi-desc{font-size:7px;color:var(--tlo);line-height:1.25;margin-top:1px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.rbadge{font-size:5px;padding:1px 3px;border:1px solid var(--grn);color:var(--grn);border-radius:1px;flex-shrink:0}
-.warbadge{font-size:5px;padding:1px 3px;border:1px solid var(--red);color:var(--red);border-radius:1px;flex-shrink:0}
-.sevbar{display:flex;gap:2px;margin-top:2px}
-.sb{height:2px;width:9px;background:var(--b0);border-radius:1px}
-
-/* ── CENTER ── */
-.center{border-left:1px solid var(--b0);border-right:1px solid var(--b0)}
-
-/* Map */
-#mapview{position:relative;overflow:hidden}
-#mapsvg{position:absolute;top:0;left:0;width:100%;height:100%;opacity:.4}
-#arccanvas{position:absolute;top:0;left:0;display:block}
-#pinglayer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
-#maplabel{position:absolute;top:6px;left:10px;font-size:6px;letter-spacing:2px;color:var(--cyan);z-index:5;pointer-events:none}
-
-/* War zones overlay dots (static) */
-.warzone{position:absolute;z-index:4;pointer-events:none}
-.wzdot{width:7px;height:7px;border-radius:50%;border:1.5px solid;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
-.wzring{width:16px;height:16px;border-radius:50%;border:1px solid;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);animation:wz 3s ease-out infinite;opacity:0}
-@keyframes wz{0%{width:7px;height:7px;opacity:.9}100%{width:32px;height:32px;opacity:0}}
-
-.ping{position:absolute;pointer-events:none}
-.pdot{width:5px;height:5px;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
-.pring{width:10px;height:10px;border-radius:50%;border:1px solid;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);animation:pr 2s ease-out infinite;opacity:0}
-@keyframes pr{0%{width:5px;height:5px;opacity:.9}100%{width:22px;height:22px;opacity:0}}
-
-.mapstats{border-top:1px solid var(--b0);display:grid;grid-template-columns:repeat(4,1fr);flex-shrink:0;background:rgba(6,14,20,0.96);height:42px}
-.msc{padding:4px 6px;border-right:1px solid var(--b0);display:flex;flex-direction:column;justify-content:center}
-.msc:last-child{border-right:none}
-.msl{font-size:5px;letter-spacing:1px;color:var(--tlo);margin-bottom:1px}
-.msv{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:var(--cyan);line-height:1}
-.mss{font-size:5px;color:var(--tlo);margin-top:1px}
-
-/* CVE + NEWS views */
-#cveview{padding:7px}
-.cvecard{padding:7px;border:1px solid var(--b0);margin-bottom:5px;cursor:pointer;animation:fiin .2s ease;transition:border-color .15s}
-.cvecard:hover{border-color:var(--b1g)}
-.cvetop{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
-.cveid{font-size:8px;color:var(--cyan);font-weight:bold}
-.cvesev{font-size:6px;padding:1px 4px;border-radius:1px}
-.cvedesc{font-size:7px;color:var(--tlo);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.cvemeta{font-size:6px;color:var(--tlo);margin-top:2px}
-#newsview{padding:0}
-.newscard{padding:8px 9px;border-bottom:1px solid var(--b0);cursor:pointer;transition:background .1s;animation:fiin .2s ease}
-.newscard:hover{background:rgba(0,212,255,0.025)}
-.newssrc{font-size:6px;letter-spacing:1px;margin-bottom:2px}
-.newstitle{font-size:8px;color:var(--thi);line-height:1.3}
-.newssnip{font-size:7px;color:var(--tlo);margin-top:2px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.newsdate{font-size:6px;color:var(--tlo);margin-top:2px}
-
-/* Cyberwarfare card */
-#warview{padding:0}
-.warcard{padding:9px 10px;border-bottom:1px solid var(--b0);cursor:pointer;transition:background .1s;animation:fiin .2s ease}
-.warcard:hover{background:rgba(255,37,69,0.04)}
-.war-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px}
-.war-actors{font-size:8px;color:var(--red);font-weight:bold}
-.war-date{font-size:6px;color:var(--tlo)}
-.war-title{font-size:8px;color:var(--thi);line-height:1.3;margin-bottom:2px}
-.war-desc{font-size:7px;color:var(--tlo);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.war-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
-.war-tag{font-size:6px;padding:1px 4px;border-radius:1px;border:1px solid}
-
-/* ── RIGHT ── */
-.right{border-left:none}
-.rtabs{display:flex;border-bottom:1px solid var(--b0);flex-shrink:0}
-.rtab{padding:5px 8px;font-size:6px;letter-spacing:1px;color:var(--tlo);cursor:pointer;border-right:1px solid var(--b0);transition:color .15s;white-space:nowrap}
-.rtab.on{color:var(--cyan);border-bottom:2px solid var(--cyan);background:rgba(0,212,255,0.04)}
-.rview{display:none;flex:1;overflow-y:auto;padding:7px;min-height:0}
-.rview.on{display:block}
-.rview::-webkit-scrollbar{width:2px}
-.rview::-webkit-scrollbar-thumb{background:var(--b1g)}
-.sec{margin-bottom:10px}
-.sectitle{font-size:6px;letter-spacing:2px;color:var(--cyan);margin-bottom:5px;text-transform:uppercase}
-.rrow{display:flex;align-items:center;padding:4px 0;border-bottom:1px solid rgba(10,30,43,.5)}
-.rrl{font-size:7px;color:var(--thi);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rrbt{width:44px;height:3px;background:var(--b0);margin:0 5px;border-radius:1px;flex-shrink:0;overflow:hidden}
-.rrbf{height:100%;border-radius:1px;transition:width 1s ease}
-.rrv{font-family:'Orbitron',monospace;font-size:8px;flex-shrink:0}
-.divider{height:1px;background:var(--b0);margin:7px 0}
-.cisacard{padding:6px;border:1px solid var(--b0);margin-bottom:5px;cursor:pointer;animation:fiin .2s ease}
-.cisatop{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
-.cisaid{font-size:8px;color:var(--cyan)}
-.cisatag{font-size:5px;padding:1px 3px;background:rgba(255,37,69,.1);color:var(--red);border:1px solid rgba(255,37,69,.2);border-radius:1px}
-.cisaprod{font-size:8px;color:var(--thi);margin-bottom:1px}
-.cisadesc{font-size:7px;color:var(--tlo);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.cisameta{font-size:6px;color:var(--tlo);margin-top:2px}
-
-/* Loading */
-.ld{display:flex;align-items:center;gap:6px;color:var(--tlo);font-size:8px;padding:10px 8px}
-.spin{width:9px;height:9px;border:1px solid var(--b0);border-top-color:var(--cyan);border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
-@keyframes sp{to{transform:rotate(360deg)}}
-.C{color:var(--red)}.H{color:var(--ora)}.M{color:var(--yel)}.L{color:var(--grn)}.N{color:var(--tx)}
+.cms{padding:10px 14px;border-bottom:1px solid var(--bd)}
+.cmst{font-size:7px;letter-spacing:2px;text-transform:uppercase;color:var(--mu);font-family:var(--mono);margin-bottom:6px}
+.sbig{font-size:34px;font-weight:700;font-family:var(--mono);line-height:1}
+.sv{font-size:10px;color:var(--mu);margin-bottom:6px}
+.sbarw{display:flex;flex-direction:column;gap:5px}
+.sbar{display:flex;align-items:center;gap:6px}
+.sbl{font-size:8px;color:var(--mu);width:80px;flex-shrink:0;font-family:var(--mono)}
+.sbt{flex:1;height:4px;background:var(--mu2);border-radius:2px;overflow:hidden}
+.sbf{height:100%;border-radius:2px;transition:width 1s ease .2s}
+.sbv{font-size:8px;font-family:var(--mono);width:24px;text-align:right}
+.pills{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.pill{padding:3px 8px;border-radius:10px;font-size:8px;font-family:var(--mono);border:1px solid}
+.sevg{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--bd)}
+.sevc{padding:8px 4px;text-align:center;border-right:1px solid var(--bd)}
+.sevc:last-child{border-right:none}
+.sevn{font-size:18px;font-weight:700;font-family:var(--mono);line-height:1}
+.sevl{font-size:7px;color:var(--mu);font-family:var(--mono);text-transform:uppercase;margin-top:2px}
+.kv{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(0,200,255,.04)}
+.kv:last-child{border-bottom:none}
+.kvk{font-size:9px;color:var(--mu)}
+.kvv{font-size:9px;color:var(--tx);font-family:var(--mono);text-align:right;max-width:180px;word-break:break-word;line-height:1.3}
+.brief{font-size:9px;color:var(--mu);line-height:1.65}
+.nc{padding:7px 0;border-bottom:1px solid rgba(0,200,255,.04);cursor:pointer}
+.nc:last-child{border:none}
+.nb{display:flex;gap:4px;margin-bottom:3px}
+.nbdg{font-size:7px;padding:2px 5px;border-radius:2px;font-family:var(--mono)}
+.nct{font-size:10px;color:var(--tx);line-height:1.35;margin-bottom:1px}
+.ncs{font-size:7.5px;color:var(--mu);font-family:var(--mono)}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div id="hdr">
-  <div class="logo">
-    <div class="lhex">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="1.5">
-        <polygon points="12,2 22,7 22,17 12,22 2,17 2,7"/>
-        <circle cx="12" cy="12" r="3"/>
-        <line x1="12" y1="2" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="22"/>
-      </svg>
-    </div>
-    <div><div class="lname">CYBERMON</div><div class="lsub">Global Cyber Intelligence</div></div>
+<!-- GATE -->
+<div id="oib">
+  <div class="oib-ico">📡</div>
+  <div class="oib-title">FEEDS LOADING</div>
+  <div class="oib-msg">Opening from file manager (<strong style="color:var(--amb)">content://</strong>). <strong style="color:var(--grn)">CORS proxies active</strong> — feeds should load. Tap dismiss and wait ~20 seconds.</div>
+  <div class="oib-step">
+    <b>For best results (optional):</b><br>
+    1. Tap <b>⋮ menu → Open with → Chrome</b><br>
+    2. Or copy path → paste in Chrome address bar<br><br>
+    <b style="color:var(--grn)">Or just dismiss — feeds load via proxy.</b>
   </div>
-  <div class="hstats">
-    <div class="hst"><div class="hst-l">UTC</div><div class="hst-v" id="h-clk">--:--:--</div></div>
-    <div class="hst"><div class="hst-l">C2</div><div class="hst-v" id="h-c2" style="color:var(--red)">--</div></div>
-    <div class="hst"><div class="hst-l">CVEs</div><div class="hst-v" id="h-cves">--</div></div>
-    <div class="hst"><div class="hst-l">KEV</div><div class="hst-v" id="h-kev" style="color:var(--ora)">--</div></div>
-    <div class="hbadge"><div class="hbd"></div><div class="hbt" id="h-status">LOADING</div></div>
-  </div>
+  <div class="oib-url" id="oib-url" onclick="copyUrl()">— detecting —</div>
+  <button class="oib-copy" id="oib-btn" onclick="copyUrl()">📋 COPY PATH TO OPEN IN CHROME</button>
+  <button style="background:var(--grn);border:none;border-radius:6px;padding:12px 20px;font-size:14px;font-family:var(--hdr);font-weight:800;letter-spacing:2px;cursor:pointer;width:100%;max-width:380px;color:#000" onclick="dismissGate()">✓ DISMISS — LOAD FEEDS NOW</button>
+  <div class="oib-sub">corsproxy.io · codetabs.com · cors.eu.org — 3 proxies confirmed active</div>
 </div>
 
-<!-- TICKER -->
-<div id="tkr">
-  <div class="tkrtag">LIVE</div>
-  <div id="tkr-inner">
-    <span class="ti"><span class="tdt" style="background:var(--tlo)"></span>Connecting to threat intelligence feeds...</span>
-    <span class="ti"><span class="tdt" style="background:var(--tlo)"></span>Connecting to threat intelligence feeds...</span>
+<!-- TOP BAR -->
+<header id="bar">
+  <div class="brand">
+    <div class="pulse"></div>
+    <div class="bname">CYBERMON</div>
+    <div class="bver">SOC</div>
   </div>
+  <div class="stats">
+    <div class="st"><div class="sdot" style="background:var(--amb)"></div><span class="slbl">CVE</span>&nbsp;<span class="sval" id="s-cve" style="color:var(--amb)">—</span></div>
+    <div class="st"><div class="sdot" style="background:var(--red)"></div><span class="slbl">KEV</span>&nbsp;<span class="sval" id="s-kev" style="color:var(--red)">—</span></div>
+    <div class="st"><div class="sdot" style="background:var(--red)"></div><span class="slbl">APT</span>&nbsp;<span class="sval" id="s-apt" style="color:var(--red)">—</span></div>
+    <div class="st"><div class="sdot" style="background:var(--dw)"></div><span class="slbl">DW</span>&nbsp;<span class="sval" id="s-dw" style="color:var(--dw)">—</span></div>
+    <div class="st" id="st-feed-cnt" style="display:none"><div class="sdot" style="background:var(--grn)"></div><span class="slbl">EVENTS</span>&nbsp;<span class="sval" id="s-evt" style="color:var(--grn)">0</span></div>
+  </div>
+  <div class="bar-r">
+    <span id="utc">--:--:--</span>
+    <div class="live-b"><div class="blnk"></div><span id="lblive">INIT</span></div>
+  </div>
+</header>
+
+<div id="shell">
+  <!-- SOURCE BAR -->
+  <div id="srcbar">
+    <div class="src"><div class="srcd" id="d-nvd" style="background:var(--amb)"></div><span class="srct" id="t-nvd" style="color:var(--amb)">NVD…</span></div>
+    <div class="src"><div class="srcd" id="d-cisa" style="background:var(--amb)"></div><span class="srct" id="t-cisa" style="color:var(--amb)">CISA…</span></div>
+    <div class="src"><div class="srcd" id="d-rss" style="background:var(--amb)"></div><span class="srct" id="t-rss" style="color:var(--amb)">RSS…</span></div>
+    <div class="src"><div class="srcd" id="d-dw" style="background:var(--amb)"></div><span class="srct" id="t-dw" style="color:var(--amb)">DW…</span></div>
+    <div class="src"><div class="srcd" style="background:var(--cyn)"></div><span class="srct" style="color:var(--cyn)">corsproxy✓</span></div>
+  </div>
+
+  <!-- ═══════ DESKTOP LAYOUT ═══════ -->
+  <div id="desktop-body">
+
+    <!-- LEFT COLUMN: Intel Feed -->
+    <div id="col-left">
+      <div class="scol-hdr">
+        <span class="scol-title">📡 Intel Feed <span class="lvdot">● LIVE</span></span>
+        <span class="cnt" id="fcnt-d">0</span>
+      </div>
+      <div class="stabs" id="mtabs-d">
+        <button class="stab on" data-m="beg" style="color:var(--teal);border-bottom-color:var(--teal)">🟢 BEG</button>
+        <button class="stab" data-m="pro">🔵 PRO</button>
+        <button class="stab" data-m="war">🔴 WAR</button>
+      </div>
+      <div style="flex-shrink:0;padding:3px 10px;font-size:7px;color:var(--mu);background:rgba(0,0,0,.2);border-bottom:1px solid var(--bd)" id="mdesc-d">Beginner — plain English on every threat.</div>
+      <div class="scol-body" id="fbody-d"><div class="ld"><div class="sp"></div>Loading feeds…</div></div>
+    </div>
+
+    <!-- CENTER: Map + bottom panels -->
+    <div id="col-center">
+      <!-- MAP -->
+      <div id="mapw" class="desktop">
+        <svg id="msvg"></svg><canvas id="acvs"></canvas>
+        <div id="pngl"></div><div id="dotl"></div>
+        <div id="ticker">
+          <div class="tlbl">INTEL</div>
+          <div id="tscrl"><span style="padding-right:50px">Connecting: NVD NIST · CISA KEV · BleepingComputer · The Hacker News · Krebs on Security · SANS ISC · CISA Advisories · Schneier · ransomware.live</span><span style="padding-right:50px">Connecting: NVD NIST · CISA KEV · BleepingComputer · The Hacker News · Krebs on Security · SANS ISC · CISA Advisories · Schneier · ransomware.live</span></div>
+        </div>
+        <div id="mleg">
+          <div class="mli"><div class="mld" style="background:var(--red)"></div>APT</div>
+          <div class="mli"><div class="mld" style="background:var(--dw)"></div>DW</div>
+          <div class="mli"><div class="mld" style="background:var(--org)"></div>C2</div>
+          <div class="mli"><div class="mld" style="background:var(--amb)"></div>CVE</div>
+          <div class="mli"><div class="mld" style="background:var(--pur)"></div>KEV</div>
+          <div class="mli" style="margin-left:auto;font-size:7px;color:var(--mu)">Click country for intel</div>
+        </div>
+      </div>
+      <!-- Center tabs -->
+      <div id="center-tabs">
+        <button class="ctab on" onclick="showCP('vuln',this)">🔍 VULN/DW</button>
+        <button class="ctab" onclick="showCP('news',this)">🗞 NEWS</button>
+        <button class="ctab" onclick="showCP('maplist',this)">🗺 COUNTRIES</button>
+        <button class="ctab" onclick="showCP('diag',this)">🔧 DIAG</button>
+      </div>
+      <div id="center-panel">
+        <!-- Vuln panel -->
+        <div class="cpanel on" id="cp-vuln">
+          <div class="tabs" id="vtabs-d">
+            <button class="tab on" data-v="cve">CVE</button>
+            <button class="tab" data-v="kev">KEV</button>
+            <button class="tab" data-v="dw">☠ DW</button>
+            <button class="tab" data-v="c2">C2</button>
+          </div>
+          <div class="ld" id="vldr-d" style="flex-shrink:0"><div class="sp"></div>Querying NVD…</div>
+          <div class="pscroll" id="vbody-d"></div>
+        </div>
+        <!-- News panel -->
+        <div class="cpanel" id="cp-news">
+          <div class="tabs" id="itabs-d">
+            <button class="tab on" data-t="all">All</button>
+            <button class="tab" data-t="apt">APT</button>
+            <button class="tab" data-t="rw">Ransom</button>
+            <button class="tab" data-t="vuln">Vuln</button>
+            <button class="tab" data-t="phish">Phish</button>
+          </div>
+          <div class="ld" id="ildr-d" style="flex-shrink:0"><div class="sp"></div>Fetching RSS…</div>
+          <div class="pscroll" id="ibody-d"></div>
+        </div>
+        <!-- Countries list -->
+        <div class="cpanel" id="cp-maplist">
+          <div class="pscroll" style="padding:8px" id="mapcii-d"></div>
+        </div>
+        <!-- Diag -->
+        <div class="cpanel" id="cp-diag">
+          <div style="padding:10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bd)">
+            <button onclick="runDiag()" style="font-size:9px;padding:5px 12px;background:var(--acc);color:#000;border:none;border-radius:2px;font-family:var(--mono);cursor:pointer;font-weight:700">RUN NETWORK TESTS</button>
+            <span style="font-size:8px;color:var(--mu);font-family:var(--mono)">Tests every proxy and endpoint</span>
+          </div>
+          <div class="pscroll" id="diagbody" style="padding:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Live Streams + Wars + Orgs -->
+    <div id="col-right">
+      <div class="scol-hdr">
+        <span class="scol-title">📺 Intel &amp; Streams</span>
+        <span style="font-size:6px;padding:1px 5px;background:rgba(255,45,45,.1);border:1px solid rgba(255,45,45,.3);color:var(--red);font-family:var(--mono);border-radius:2px;animation:bk 1s step-end infinite">● LIVE</span>
+      </div>
+      <div class="stabs" id="stream-tabs">
+        <button class="stab on" onclick="showStream('wars',this)">⚔ Wars</button>
+        <button class="stab" onclick="showStream('orgs',this)">🏛 Orgs</button>
+        <button class="stab" onclick="showStream('yt',this)">▶ YouTube</button>
+        <button class="stab" onclick="showStream('twitter',this)">𝕏 OSINT</button>
+      </div>
+      <div class="scol-body" id="stream-body">
+        <!-- War Zones & Cyber Surge -->
+        <div id="stream-wars">
+          <div id="war-zone-panel"></div>
+        </div>
+        <!-- Targeted Organisations -->
+        <div id="stream-orgs" style="display:none">
+          <div id="org-target-panel"></div>
+        </div>
+        <!-- YouTube streams -->
+        <div id="stream-yt" style="display:none">
+          <div style="padding:5px 8px;font-size:7px;color:var(--mu);font-family:var(--mono);border-bottom:1px solid var(--bd)">Cybersecurity channels — tap to open YouTube</div>
+          <div id="yt-cards"></div>
+        </div>
+        <!-- OSINT accounts -->
+        <div id="stream-twitter" style="display:none">
+          <div style="padding:5px 8px;font-size:7px;color:var(--mu);font-family:var(--mono);border-bottom:1px solid var(--bd)">Top OSINT &amp; threat intel accounts</div>
+          <div id="twitter-cards"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /desktop-body -->
+
+  <!-- ═══════ MOBILE LAYOUT ═══════ -->
+  <div id="mobile-body">
+    <!-- Mobile map (separate element, shared data via window.*) -->
+    <div id="mapw-mob">
+      <svg id="msvg-mob"></svg><canvas id="acvs-mob"></canvas>
+      <div id="pngl-mob"></div><div id="dotl-mob"></div>
+      <div id="mob-ticker">
+        <div class="tlbl" style="font-size:6px;padding:0 6px">INTEL</div>
+        <div id="mob-tscrl"><span style="padding-right:40px">Connecting feeds…</span><span style="padding-right:40px">Connecting feeds…</span></div>
+      </div>
+    </div>
+
+    <div id="panels">
+      <!-- Intel Feed -->
+      <div class="panel active" id="pn-feed">
+        <div class="ph"><span class="pt">Intel Feed <span class="lvdot">● LIVE</span></span><span class="cnt" id="fcnt">0</span></div>
+        <div class="tabs" id="mtabs">
+          <button class="tab tbeg" data-m="beg">🟢 Beg</button>
+          <button class="tab" data-m="pro">🔵 Pro</button>
+          <button class="tab" data-m="war">🔴 War</button>
+        </div>
+        <div class="mdesc" id="mdesc">Beginner — plain English explanations on every threat event.</div>
+        <div class="pscroll" id="fbody"><div class="ld"><div class="sp"></div>Loading feeds…</div></div>
+      </div>
+      <!-- News -->
+      <div class="panel" id="pn-news">
+        <div class="ph"><span class="pt">Live Intelligence</span><span class="cnt" id="icnt">0</span></div>
+        <div class="tabs" id="itabs">
+          <button class="tab on" data-t="all">All</button>
+          <button class="tab" data-t="apt">APT</button>
+          <button class="tab" data-t="rw">Ransom</button>
+          <button class="tab" data-t="vuln">Vuln</button>
+          <button class="tab" data-t="phish">Phish</button>
+        </div>
+        <div class="ld" id="ildr" style="flex-shrink:0"><div class="sp"></div>Fetching RSS…</div>
+        <div class="pscroll" id="ibody"></div>
+      </div>
+      <!-- Vuln/DW -->
+      <div class="panel" id="pn-vuln">
+        <div class="ph"><span class="pt">Vuln &amp; Dark Web</span><span class="cnt" id="vcnt">0</span></div>
+        <div class="tabs" id="vtabs">
+          <button class="tab on" data-v="cve">CVE</button>
+          <button class="tab" data-v="kev">KEV</button>
+          <button class="tab" data-v="dw">☠ DW</button>
+          <button class="tab" data-v="c2">C2</button>
+        </div>
+        <div class="ld" id="vldr" style="flex-shrink:0"><div class="sp"></div>Querying NVD…</div>
+        <div class="pscroll" id="vbody"></div>
+      </div>
+      <!-- Streams (mobile) -->
+      <div class="panel" id="pn-streams">
+        <div class="ph"><span class="pt">⚔ Wars &amp; 📺 Streams</span></div>
+        <div class="tabs" id="mob-stream-tabs">
+          <button class="tab on tbeg" onclick="showMobStream('wars',this)">⚔ Wars</button>
+          <button class="tab" onclick="showMobStream('orgs',this)">🏛 Orgs</button>
+          <button class="tab" onclick="showMobStream('yt',this)">▶ YT</button>
+          <button class="tab" onclick="showMobStream('osint',this)">𝕏 OSINT</button>
+        </div>
+        <div id="mob-wars-body" class="pscroll"></div>
+        <div id="mob-orgs-body" class="pscroll" style="display:none"></div>
+        <div id="mob-yt-body" class="pscroll" style="display:none"></div>
+        <div id="mob-osint-body" class="pscroll" style="display:none"></div>
+      </div>
+      <!-- Map info -->
+      <div class="panel" id="pn-map">
+        <div class="ph"><span class="pt">World Map</span><span class="cnt" id="evcnt">0</span></div>
+        <div class="pscroll" style="padding:8px"><div id="mapcii"></div></div>
+      </div>
+      <!-- Diag -->
+      <div class="panel" id="pn-diag">
+        <div class="ph">
+          <span class="pt">🔧 Network Diagnostics</span>
+          <button onclick="runDiag()" style="font-size:8px;padding:3px 8px;background:var(--acc);color:#000;border:none;border-radius:2px;font-family:var(--mono);cursor:pointer">RUN</button>
+        </div>
+        <div class="pscroll" id="diagbody-mob" style="padding:10px">
+          <div style="font-size:9px;color:var(--tx);margin-bottom:8px">Tap RUN to test all network endpoints.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE NAV -->
+    <nav id="bnav">
+      <button class="bn on" onclick="showP('feed',this)"><div class="ico">📡</div><span>Intel</span></button>
+      <button class="bn" onclick="showP('news',this)"><div class="ico">🗞</div><span>News</span></button>
+      <button class="bn" onclick="showP('vuln',this)"><div class="ico">🔍</div><span>Vuln</span></button>
+      <button class="bn" onclick="showP('streams',this)"><div class="ico">📺</div><span>Streams</span></button>
+      <button class="bn" onclick="showP('map',this)"><div class="ico">🗺</div><span>Map</span></button>
+      <button class="bn" onclick="showP('diag',this)"><div class="ico">🔧</div><span>Diag</span></button>
+    </nav>
+  </div><!-- /mobile-body -->
+
+</div><!-- /shell -->
+
+<!-- COUNTRY MODAL -->
+<div id="cmod">
+  <div class="cmh">
+    <div>
+      <div class="cmflag" id="cmf">🌐</div>
+      <div class="cmname" id="cmn">Country Intel</div>
+      <div class="cmsub" id="cms">Click a country on the map</div>
+    </div>
+    <button class="cmclose" onclick="closeModal()">✕</button>
+  </div>
+  <div class="cmbd" id="cmbd"><div class="ld"><div class="sp"></div>Loading…</div></div>
 </div>
-
-<!-- APP -->
-<div id="app">
-
-  <!-- LEFT: LIVE FEED -->
-  <div class="pnl left">
-    <div class="ph"><span class="pt">Live Events</span><span class="pb" id="lbadge">0</span></div>
-    <div class="pbody" id="feed">
-      <div class="ld"><div class="spin"></div>Loading...</div>
-    </div>
-  </div>
-
-  <!-- CENTER: MAP + TABS -->
-  <div class="pnl center" style="flex-direction:column">
-    <div class="ph" style="flex-shrink:0"><span class="pt">Intelligence View</span><span class="pb">LIVE</span></div>
-    <div class="tabs" style="flex-shrink:0">
-      <div class="tab on"  data-cv="mapview">MAP</div>
-      <div class="tab"     data-cv="warview">WARZONE</div>
-      <div class="tab"     data-cv="cveview">CVEs</div>
-      <div class="tab"     data-cv="newsview">NEWS</div>
-    </div>
-
-    <!-- MAP -->
-    <div class="tview on" id="mapview" style="position:relative;flex:1;min-height:0">
-      <div id="maplabel">GLOBAL THREAT MAP</div>
-      <svg id="mapsvg" viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
-        <defs><filter id="gl"><feGaussianBlur stdDeviation="1.5" result="cb"/><feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-        <path d="M80 80L220 60L280 80L290 120L270 150L240 180L220 200L200 220L180 230L160 220L130 240L110 260L90 250L70 220L60 180L70 140Z" fill="rgba(0,212,255,.07)" stroke="rgba(0,212,255,.22)" stroke-width=".8" filter="url(#gl)"/>
-        <path d="M230 30L300 20L320 40L300 60L260 65L230 50Z" fill="rgba(0,212,255,.04)" stroke="rgba(0,212,255,.1)" stroke-width=".5"/>
-        <path d="M180 250L220 240L250 260L260 300L255 350L240 390L220 410L200 400L185 370L175 330L170 290L175 260Z" fill="rgba(0,212,255,.07)" stroke="rgba(0,212,255,.22)" stroke-width=".8" filter="url(#gl)"/>
-        <path d="M420 60L500 50L530 70L520 100L500 120L480 130L460 120L440 130L430 120L420 100L410 80Z" fill="rgba(0,212,255,.07)" stroke="rgba(0,212,255,.22)" stroke-width=".8" filter="url(#gl)"/>
-        <path d="M450 30L480 20L510 30L505 55L480 60L455 50Z" fill="rgba(0,212,255,.04)" stroke="rgba(0,212,255,.1)" stroke-width=".5"/>
-        <path d="M430 140L510 130L540 160L545 200L540 250L520 300L500 340L480 350L460 340L440 300L430 250L420 200L420 160Z" fill="rgba(0,212,255,.07)" stroke="rgba(0,212,255,.22)" stroke-width=".8" filter="url(#gl)"/>
-        <path d="M530 40L700 20L780 40L800 60L780 80L750 90L700 80L660 90L630 80L590 85L560 80L540 70Z" fill="rgba(0,212,255,.07)" stroke="rgba(0,212,255,.22)" stroke-width=".8" filter="url(#gl)"/>
-        <path d="M540 130L600 120L630 140L625 170L600 180L570 175L545 155Z" fill="rgba(0,212,255,.05)" stroke="rgba(0,212,255,.14)" stroke-width=".6"/>
-        <path d="M640 140L690 135L700 160L695 200L680 230L660 235L645 220L635 185L635 160Z" fill="rgba(0,212,255,.06)" stroke="rgba(0,212,255,.14)" stroke-width=".6"/>
-        <path d="M700 80L800 70L840 90L830 130L800 150L760 155L730 140L710 120L700 100Z" fill="rgba(0,212,255,.07)" stroke="rgba(0,212,255,.22)" stroke-width=".8" filter="url(#gl)"/>
-        <path d="M760 280L840 260L890 280L900 320L880 360L840 370L800 360L770 330L755 300Z" fill="rgba(0,212,255,.07)" stroke="rgba(0,212,255,.22)" stroke-width=".8" filter="url(#gl)"/>
-        <path d="M830 80L850 75L860 88L850 100L835 98Z" fill="rgba(0,212,255,.06)" stroke="rgba(0,212,255,.16)" stroke-width=".6"/>
-        <path d="M415 65L425 60L432 68L428 80L418 78Z" fill="rgba(0,212,255,.05)" stroke="rgba(0,212,255,.12)" stroke-width=".5"/>
-        <line x1="0" y1="250" x2="1000" y2="250" stroke="rgba(0,212,255,.05)" stroke-width=".5"/>
-        <line x1="500" y1="0" x2="500" y2="500" stroke="rgba(0,212,255,.05)" stroke-width=".5"/>
-        <line x1="0" y1="166" x2="1000" y2="166" stroke="rgba(0,212,255,.02)" stroke-width=".4" stroke-dasharray="4,10"/>
-        <line x1="0" y1="333" x2="1000" y2="333" stroke="rgba(0,212,255,.02)" stroke-width=".4" stroke-dasharray="4,10"/>
-        <line x1="250" y1="0" x2="250" y2="500" stroke="rgba(0,212,255,.02)" stroke-width=".4" stroke-dasharray="4,10"/>
-        <line x1="750" y1="0" x2="750" y2="500" stroke="rgba(0,212,255,.02)" stroke-width=".4" stroke-dasharray="4,10"/>
-      </svg>
-      <canvas id="arccanvas"></canvas>
-      <div id="pinglayer"></div>
-      <!-- War zone hotspots -->
-      <div id="warzones"></div>
-      <div class="mapstats">
-        <div class="msc"><div class="msl">C2 Servers</div><div class="msv" id="ms-c2">--</div><div class="mss">Feodo</div></div>
-        <div class="msc"><div class="msl">Malware URLs</div><div class="msv" id="ms-url">--</div><div class="mss">URLhaus</div></div>
-        <div class="msc"><div class="msl">CVEs 7d</div><div class="msv" id="ms-cve">--</div><div class="mss">NVD</div></div>
-        <div class="msc"><div class="msl">Countries</div><div class="msv" id="ms-cc">--</div><div class="mss">Live</div></div>
-      </div>
-    </div>
-
-    <!-- WARZONE TAB -->
-    <div class="tview" id="warview" style="padding:0;flex:1;overflow-y:auto">
-      <div id="war-list"></div>
-    </div>
-
-    <!-- CVE TAB -->
-    <div class="tview" id="cveview" style="flex:1;overflow-y:auto">
-      <div class="ld" id="cve-ld" style="padding:10px 8px"><div class="spin"></div>Fetching NVD...</div>
-      <div id="cve-list" style="padding:7px"></div>
-    </div>
-
-    <!-- NEWS TAB -->
-    <div class="tview" id="newsview" style="flex:1;overflow-y:auto">
-      <div class="ld" id="news-ld" style="padding:10px 8px"><div class="spin"></div>Fetching news feeds...</div>
-      <div id="news-list"></div>
-    </div>
-  </div>
-
-  <!-- RIGHT: ANALYTICS -->
-  <div class="pnl right">
-    <div class="ph"><span class="pt">Analytics</span><span class="pb">REAL</span></div>
-    <div class="rtabs">
-      <div class="rtab on" data-rv="r-threats">THREATS</div>
-      <div class="rtab"    data-rv="r-cisa">KEV</div>
-    </div>
-    <div class="rview on" id="r-threats">
-      <div class="sec">
-        <div class="sectitle">Botnet Families</div>
-        <div id="r-families"><div class="ld"><div class="spin"></div></div></div>
-      </div>
-      <div class="divider"></div>
-      <div class="sec">
-        <div class="sectitle">Source Countries</div>
-        <div id="r-countries"><div class="ld"><div class="spin"></div></div></div>
-      </div>
-      <div class="divider"></div>
-      <div class="sec">
-        <div class="sectitle">Threat Types</div>
-        <div id="r-ttypes"><div class="ld"><div class="spin"></div></div></div>
-      </div>
-    </div>
-    <div class="rview" id="r-cisa">
-      <div class="sec">
-        <div class="sectitle">Known Exploited CVEs</div>
-        <div class="ld" id="cisa-ld"><div class="spin"></div>Loading...</div>
-        <div id="cisa-list"></div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- #app -->
 
 <script>
-// ── Helpers ────────────────────────────────────────────────
-const $ = id => document.getElementById(id);
-const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const PROXY = 'https://api.allorigins.win/get?url=';
-const C7 = ['#ff2545','#ff7b00','#ffd60a','#bf5af2','#00d4ff','#00ff88','#7ab0c0'];
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const isDesktop=()=>window.innerWidth>=900;
 
-// ── Country coords (SVG 1000×500 space) ───────────────────
-const CC = {
-  US:[165,150],CA:[150,90],MX:[130,190],BR:[220,300],AR:[215,370],
-  GB:[420,72],DE:[468,82],FR:[445,90],NL:[455,75],SE:[475,55],
-  NO:[460,50],FI:[490,50],PL:[490,82],UA:[510,85],IT:[468,105],
-  ES:[428,100],BE:[450,78],CH:[458,90],AT:[470,88],CZ:[475,83],
-  HU:[482,88],RO:[502,90],BG:[503,97],DK:[463,65],SK:[480,84],
-  LV:[495,65],LT:[494,68],EE:[494,60],BY:[507,75],
-  RU:[630,68],CN:[755,120],JP:[840,110],KR:[810,130],TW:[800,150],
-  HK:[778,158],IN:[660,168],PK:[628,153],SG:[758,220],MY:[758,200],
-  ID:[790,238],TH:[748,192],VN:[768,192],PH:[798,208],AU:[820,318],
-  TR:[542,105],IL:[544,132],IR:[582,130],SA:[563,158],IQ:[558,133],
-  SY:[543,123],LB:[540,128],JO:[542,138],AE:[582,157],
-  EG:[510,153],ZA:[478,328],NG:[448,208],KE:[528,238],MA:[428,153],
-  KZ:[592,98],GE:[548,103],AZ:[558,108],AM:[554,107],
-};
-const CCN = {
-  US:'United States',RU:'Russia',CN:'China',DE:'Germany',GB:'UK',FR:'France',
-  NL:'Netherlands',BR:'Brazil',IN:'India',UA:'Ukraine',JP:'Japan',KR:'S.Korea',
-  CA:'Canada',AU:'Australia',SG:'Singapore',TR:'Turkey',IT:'Italy',ES:'Spain',
-  PL:'Poland',RO:'Romania',HK:'Hong Kong',TW:'Taiwan',SE:'Sweden',NO:'Norway',
-  FI:'Finland',IL:'Israel',IR:'Iran',ZA:'S.Africa',NG:'Nigeria',EG:'Egypt',
-  MX:'Mexico',AR:'Argentina',ID:'Indonesia',TH:'Thailand',VN:'Vietnam',
-  PH:'Philippines',BY:'Belarus',BE:'Belgium',CH:'Switzerland',AT:'Austria',
-  CZ:'Czech Rep',HU:'Hungary',BG:'Bulgaria',DK:'Denmark',KE:'Kenya',
-  MA:'Morocco',KZ:'Kazakhstan',GE:'Georgia',AZ:'Azerbaijan',SA:'Saudi Arabia',
-  IQ:'Iraq',SY:'Syria',LB:'Lebanon',JO:'Jordan',AE:'UAE',AM:'Armenia',
-};
-
-// ── Clock ──────────────────────────────────────────────────
-setInterval(() => { $('h-clk').textContent = new Date().toUTCString().split(' ')[4]; }, 1000);
-
-// ── Tabs ───────────────────────────────────────────────────
-document.querySelectorAll('.tab').forEach(t => {
-  t.addEventListener('click', () => {
-    t.closest('.tabs').querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
-    const views = t.closest('.pnl').querySelectorAll('.tview');
-    views.forEach(x => x.classList.remove('on'));
-    t.classList.add('on');
-    const v = $(t.dataset.cv);
-    if (v) { v.classList.add('on'); }
-    if (t.dataset.cv === 'mapview') setTimeout(resizeCanvas, 30);
+// ══════════════════════════════════════════════════════════
+// XHR HELPERS — no AbortSignal, no fetch(), zero clone issues
+// ══════════════════════════════════════════════════════════
+function xhrGet(url,ms){
+  return new Promise(function(resolve,reject){
+    var x=new XMLHttpRequest(),settled=false;
+    var tid=setTimeout(function(){if(!settled){settled=true;x.abort();reject(new Error('timeout'));}},ms||12000);
+    x.open('GET',url,true);
+    x.onload=function(){clearTimeout(tid);if(!settled){settled=true;var ok=x.status>=200&&x.status<300,b=x.responseText;resolve({ok:ok,status:x.status,text:function(){return Promise.resolve(b);},json:function(){return Promise.resolve(JSON.parse(b));}});}};
+    x.onerror=function(){clearTimeout(tid);if(!settled){settled=true;reject(new Error('network error'));}};
+    x.onabort=function(){clearTimeout(tid);if(!settled){settled=true;reject(new Error('aborted'));}};
+    x.send();
   });
-});
-document.querySelectorAll('.rtab').forEach(t => {
-  t.addEventListener('click', () => {
-    document.querySelectorAll('.rtab').forEach(x => x.classList.remove('on'));
-    document.querySelectorAll('.rview').forEach(x => x.classList.remove('on'));
-    t.classList.add('on');
-    $(t.dataset.rv).classList.add('on');
+}
+function xhrGetH(url,headers,ms){
+  return new Promise(function(resolve,reject){
+    var x=new XMLHttpRequest(),settled=false;
+    var tid=setTimeout(function(){if(!settled){settled=true;x.abort();reject(new Error('timeout'));}},ms||12000);
+    x.open('GET',url,true);
+    if(headers)Object.keys(headers).forEach(function(k){x.setRequestHeader(k,headers[k]);});
+    x.onload=function(){clearTimeout(tid);if(!settled){settled=true;var ok=x.status>=200&&x.status<300,b=x.responseText;resolve({ok:ok,status:x.status,text:function(){return Promise.resolve(b);},json:function(){return Promise.resolve(JSON.parse(b));}});}};
+    x.onerror=function(){clearTimeout(tid);if(!settled){settled=true;reject(new Error('network error'));}};
+    x.onabort=function(){clearTimeout(tid);if(!settled){settled=true;reject(new Error('aborted'));}};
+    x.send();
   });
-});
-
-// ── Canvas ─────────────────────────────────────────────────
-const canvas = $('arccanvas');
-const ctx = canvas.getContext('2d');
-let arcs = [];
-
-function resizeCanvas() {
-  const mv = $('mapview');
-  if (!mv) return;
-  // Use offsetWidth/Height which reflect actual rendered size
-  canvas.width  = mv.offsetWidth  || mv.clientWidth  || 300;
-  canvas.height = (mv.offsetHeight || mv.clientHeight || 200) - 42;
-  canvas.style.width  = canvas.width  + 'px';
-  canvas.style.height = canvas.height + 'px';
-  repositionWarzones();
 }
-
-// Run after layout paint
-window.addEventListener('load', () => { setTimeout(resizeCanvas, 100); });
-window.addEventListener('resize', () => { setTimeout(resizeCanvas, 50); });
-// Also run on DOMContentLoaded as fallback
-document.addEventListener('DOMContentLoaded', () => { setTimeout(resizeCanvas, 200); });
-
-function toXY(cc) {
-  const c = CC[cc]; if (!c) return null;
-  if (!canvas.width || !canvas.height) return null;
-  return { x: (c[0]/1000)*canvas.width, y: (c[1]/500)*canvas.height };
+function extractJSON(text){
+  if(!text||text.length<4)throw new Error('empty');
+  try{var o=JSON.parse(text);if(o&&typeof o.contents==='string')return JSON.parse(o.contents);return o;}
+  catch(e){throw new Error('parse fail');}
 }
+// Confirmed working proxies (from user device diagnostics)
+const PROXIES=[
+  function(u){return'https://corsproxy.io/?url='+encodeURIComponent(u);},
+  function(u){return'https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u);},
+  function(u){return'https://cors.eu.org/'+u;}
+];
+const RSS2JSON=function(u){return'https://api.rss2json.com/v1/api.json?rss_url='+encodeURIComponent(u);};
 
-function launchArc(src, tgt, col) {
-  const s = toXY(src), e = toXY(tgt);
-  if (!s || !e) return;
-  arcs.push({ sx:s.x, sy:s.y, ex:e.x, ey:e.y, col, p:0,
-    spd: 0.006 + Math.random()*0.012, alpha:1 });
-}
-
-function drawFrame() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  arcs = arcs.filter(a => a.alpha > 0.01);
-  for (const a of arcs) {
-    a.p = Math.min(a.p + a.spd, 1);
-    const cx = (a.sx+a.ex)/2;
-    const cy = Math.min(a.sy,a.ey) - Math.abs(a.ex-a.sx)*0.28;
-    const B = (x0,y0,x1,y1,x2,y2,t) => ({
-      x:(1-t)**2*x0+2*(1-t)*t*x1+t**2*x2,
-      y:(1-t)**2*y0+2*(1-t)*t*y1+t**2*y2
-    });
-    const steps = 24;
-    for (let i = 0; i < steps; i++) {
-      const t1 = Math.max(0, a.p - i*0.03);
-      const t2 = Math.max(0, a.p - (i+1)*0.03);
-      if (t1 <= 0 && t2 <= 0) continue;
-      const p1 = B(a.sx,a.sy,cx,cy,a.ex,a.ey,t1);
-      const p2 = B(a.sx,a.sy,cx,cy,a.ex,a.ey,t2);
-      ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y);
-      ctx.strokeStyle = a.col;
-      ctx.lineWidth = Math.max(0.1, 1.1 - i*0.035);
-      ctx.globalAlpha = a.alpha * (1-i/steps) * 0.85;
-      ctx.stroke();
-    }
-    if (a.p > 0) {
-      const tip = B(a.sx,a.sy,cx,cy,a.ex,a.ey,a.p);
-      ctx.beginPath(); ctx.arc(tip.x,tip.y,2,0,Math.PI*2);
-      ctx.fillStyle = a.col; ctx.globalAlpha = a.alpha; ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-    if (a.p >= 1) a.alpha -= 0.022;
+async function fetchJ(url){
+  try{var r=await xhrGet(url,10000);if(r.ok){var t=await r.text();if(t&&t.length>10)return extractJSON(t);}}catch(e){}
+  for(var i=0;i<PROXIES.length;i++){
+    try{var r2=await xhrGet(PROXIES[i](url),16000);if(!r2.ok)continue;var t2=await r2.text();if(!t2||t2.length<10)continue;return extractJSON(t2);}catch(e){}
   }
-  requestAnimationFrame(drawFrame);
-}
-drawFrame();
-
-function addPing(cc, col, delay=0) {
-  const mv = $('mapview');
-  setTimeout(() => {
-    const pos = toXY(cc); if (!pos) return;
-    const l = $('pinglayer');
-    const d = document.createElement('div');
-    d.className = 'ping';
-    d.style.cssText = `left:${pos.x}px;top:${pos.y}px`;
-    d.innerHTML = `<div class="pdot" style="background:${col}"></div><div class="pring" style="border-color:${col}"></div>`;
-    l.appendChild(d);
-    setTimeout(() => d.remove(), 3000);
-  }, delay);
+  throw new Error('All proxies failed: '+url);
 }
 
-// ── War zone hotspot dots ──────────────────────────────────
-const WARZONES_MAP = [
-  { cc:'IL', col:'#ff2545', delay:0 },
-  { cc:'IQ', col:'#ff2545', delay:400 },
-  { cc:'SY', col:'#ff7b00', delay:800 },
-  { cc:'UA', col:'#ff2545', delay:200 },
-  { cc:'IR', col:'#ffd60a', delay:600 },
-  { cc:'LB', col:'#ff7b00', delay:1000 },
-];
+// ══════════════════════════════════════════════════════════
+// GATE
+// ══════════════════════════════════════════════════════════
+;(function(){
+  var loc=location.href;
+  var urlEl=$('oib-url');
+  if(urlEl)urlEl.textContent=loc.length>80?loc.slice(0,77)+'…':loc;
+  var isBroken=loc.startsWith('content://')||loc.startsWith('file://')||loc.startsWith('android_asset')||(/Android/i.test(navigator.userAgent)&&!/Chrome/i.test(navigator.userAgent))||(typeof window.Android!=='undefined');
+  if(isBroken)$('oib').classList.add('show');
+  xhrGet('https://corsproxy.io/?url='+encodeURIComponent('https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'),8000)
+    .then(function(r){if(!r.ok)showFetchWarn();}).catch(function(){showFetchWarn();});
+})();
+function showFetchWarn(){var bar=$('srcbar');if(!bar)return;var w=document.createElement('div');w.className='src';w.style.cssText='color:var(--amb);font-size:7.5px;font-family:var(--mono);border-left:2px solid var(--amb);padding-left:8px;white-space:nowrap;flex-shrink:0';w.textContent='⚠ Network restricted';bar.prepend(w);}
+function dismissGate(){$('oib').classList.remove('show');}
+function copyUrl(){
+  var txt=location.href;
+  try{if(navigator.clipboard)navigator.clipboard.writeText(txt).catch(function(){});}catch(e){}
+  try{var bare=txt.replace(/^[a-z]+:\/\//i,'');window.location.href='intent://'+bare+'#Intent;scheme=content;package=com.android.chrome;end';}catch(e){}
+  var urlEl=$('oib-url'),btn=$('oib-btn');
+  if(urlEl){urlEl.style.color='var(--grn)';urlEl.textContent='✓ Copied!';}
+  if(btn){btn.style.background='var(--grn)';btn.textContent='✓ COPIED!';}
+  setTimeout(function(){if(urlEl){urlEl.style.color='var(--acc)';urlEl.textContent=txt.length>80?txt.slice(0,77)+'…':txt;}if(btn){btn.style.background='var(--acc)';btn.textContent='📋 COPY PATH TO OPEN IN CHROME';}},5000);
+}
 
-function repositionWarzones() {
-  WARZONES_MAP.forEach(({ cc, col, delay }) => {
-    const pos = toXY(cc); if (!pos) return;
-    const id = 'wz-' + cc;
-    let d = document.getElementById(id);
-    if (!d) {
-      d = document.createElement('div');
-      d.id = id;
-      d.className = 'warzone';
-      d.innerHTML = `<div class="wzdot" style="background:${col};border-color:${col}"></div>`+
-        `<div class="wzring" style="border-color:${col};animation-delay:${delay}ms"></div>`;
-      $('warzones').appendChild(d);
-    }
-    d.style.cssText = `left:${pos.x}px;top:${pos.y}px`;
+// ══════════════════════════════════════════════════════════
+// GEO DATA
+// ══════════════════════════════════════════════════════════
+const CN_={US:'United States',RU:'Russia',CN:'China',DE:'Germany',GB:'United Kingdom',FR:'France',NL:'Netherlands',BR:'Brazil',IN:'India',UA:'Ukraine',JP:'Japan',KR:'South Korea',CA:'Canada',AU:'Australia',SG:'Singapore',TR:'Turkey',IT:'Italy',ES:'Spain',PL:'Poland',TW:'Taiwan',SE:'Sweden',NO:'Norway',FI:'Finland',IL:'Israel',IR:'Iran',ZA:'South Africa',NG:'Nigeria',EG:'Egypt',MX:'Mexico',BY:'Belarus',BE:'Belgium',CH:'Switzerland',AT:'Austria',CZ:'Czechia',HU:'Hungary',DK:'Denmark',SA:'Saudi Arabia',IQ:'Iraq',SY:'Syria',AE:'UAE',KP:'N.Korea',PH:'Philippines',KE:'Kenya',MA:'Morocco',LT:'Lithuania',LV:'Latvia',EE:'Estonia',KZ:'Kazakhstan',GE:'Georgia',AZ:'Azerbaijan',PK:'Pakistan',AF:'Afghanistan',YE:'Yemen',LY:'Libya',VN:'Vietnam',TH:'Thailand',ID:'Indonesia',AR:'Argentina',CO:'Colombia',PT:'Portugal',GR:'Greece',SK:'Slovakia',HR:'Croatia',RS:'Serbia',MY:'Malaysia',NZ:'New Zealand',CL:'Chile',RO:'Romania'};
+const FL={US:'🇺🇸',RU:'🇷🇺',CN:'🇨🇳',DE:'🇩🇪',GB:'🇬🇧',FR:'🇫🇷',NL:'🇳🇱',BR:'🇧🇷',IN:'🇮🇳',UA:'🇺🇦',JP:'🇯🇵',KR:'🇰🇷',CA:'🇨🇦',AU:'🇦🇺',SG:'🇸🇬',TR:'🇹🇷',IT:'🇮🇹',ES:'🇪🇸',PL:'🇵🇱',IL:'🇮🇱',IR:'🇮🇷',ZA:'🇿🇦',NG:'🇳🇬',EG:'🇪🇬',MX:'🇲🇽',SE:'🇸🇪',NO:'🇳🇴',FI:'🇫🇮',BE:'🇧🇪',CH:'🇨🇭',AT:'🇦🇹',DK:'🇩🇰',SA:'🇸🇦',AE:'🇦🇪',KP:'🇰🇵',PH:'🇵🇭',TW:'🇹🇼',PK:'🇵🇰',ID:'🇮🇩',TH:'🇹🇭',VN:'🇻🇳',BY:'🇧🇾',KZ:'🇰🇿',AR:'🇦🇷',CO:'🇨🇴',PT:'🇵🇹',GR:'🇬🇷',SK:'🇸🇰',HR:'🇭🇷',RS:'🇷🇸',EE:'🇪🇪',LV:'🇱🇻',LT:'🇱🇹',GE:'🇬🇪',AZ:'🇦🇿',MY:'🇲🇾',NZ:'🇳🇿',KE:'🇰🇪',MA:'🇲🇦',IQ:'🇮🇶',SY:'🇸🇾',YE:'🇾🇪',AF:'🇦🇫',LY:'🇱🇾',CL:'🇨🇱',RO:'🇷🇴',IT:'🇮🇹',ES:'🇪🇸',NG:'🇳🇬'};
+const LL={US:[-95,38],CA:[-96,60],MX:[-102,23],BR:[-53,-10],AR:[-64,-34],CO:[-74,4],GB:[-1,52],DE:[10,51],FR:[2,47],NL:[5,52],SE:[18,60],NO:[10,62],FI:[26,64],PL:[20,52],UA:[31,49],IT:[12,42],ES:[-4,40],BE:[4,50],CH:[8,47],AT:[14,47],CZ:[16,50],HU:[19,47],DK:[10,56],LV:[25,57],LT:[24,56],EE:[25,59],BY:[28,53],PT:[-8,39],GR:[22,39],SK:[19,48],HR:[16,45],RS:[21,44],RO:[25,46],RU:[90,60],CN:[105,35],JP:[138,36],KR:[128,36],TW:[121,24],IN:[78,22],PK:[70,30],SG:[104,1],ID:[118,-2],TH:[100,15],VN:[108,14],PH:[122,13],AU:[135,-25],NZ:[172,-42],KP:[127,40],TR:[35,39],IL:[35,31],IR:[53,33],SA:[45,24],AE:[54,24],IQ:[44,33],SY:[38,35],YE:[48,15],AF:[67,33],KZ:[68,48],GE:[43,42],AZ:[47,40],EG:[30,26],ZA:[25,-29],NG:[8,10],KE:[38,-1],MA:[-5,32],LY:[17,25],MY:[110,4],NG:[8,10],CL:[-71,-33],CO:[-74,4]};
+const N2CC={840:'US',276:'DE',826:'GB',250:'FR',380:'IT',724:'ES',56:'BE',528:'NL',752:'SE',578:'NO',246:'FI',616:'PL',804:'UA',643:'RU',156:'CN',392:'JP',410:'KR',124:'CA',36:'AU',356:'IN',76:'BR',484:'MX',32:'AR',710:'ZA',566:'NG',818:'EG',682:'SA',784:'AE',368:'IQ',760:'SY',887:'YE',4:'AF',703:'SK',191:'HR',688:'RS',100:'BG',348:'HU',203:'CZ',40:'AT',756:'CH',208:'DK',300:'GR',620:'PT',792:'TR',376:'IL',364:'IR',170:'CO',152:'CL',360:'ID',764:'TH',704:'VN',608:'PH',702:'SG',408:'KP',158:'TW',504:'MA',434:'LY',404:'KE',233:'EE',428:'LV',440:'LT',398:'KZ',268:'GE',31:'AZ',458:'MY',554:'NZ',60:'BY',642:'RO',586:'PK'};
+const VCC={'United States':'US','United Kingdom':'GB','Germany':'DE','France':'FR','Canada':'CA','Australia':'AU','Italy':'IT','Spain':'ES','Netherlands':'NL','Brazil':'BR','India':'IN','Japan':'JP','South Korea':'KR','Poland':'PL','Sweden':'SE','Switzerland':'CH','Belgium':'BE','Ukraine':'UA','Israel':'IL','Taiwan':'TW','Mexico':'MX','Argentina':'AR','Portugal':'PT','Austria':'AT','Denmark':'DK','New Zealand':'NZ','Singapore':'SG','Finland':'FI','Norway':'NO','Greece':'GR','Romania':'RO','Turkey':'TR','Russia':'RU','China':'CN'};
+const BEG={Ransomware:'💡 Ransomware locks your files and demands payment. Keep offline backups — never click suspicious links.',Phishing:'💡 A fake email/website designed to steal your password. Always verify the actual sender domain.',Zero_Day:'💡 A secret software flaw being exploited before any patch exists. Update software immediately.',Supply_Chain:'💡 Malware hidden inside a trusted software update, hitting thousands at once.',Critical_Infra:'💡 Attacks on power grids, water plants, hospitals — the most severe category.',Espionage:'💡 Nation-state hackers silently stealing secrets, staying hidden for months.',Wiper:'💡 Malware that permanently deletes all data — pure destruction used as a cyber weapon.',Cred_Theft:'💡 Passwords stolen. Enable 2-factor authentication everywhere, immediately.',DDoS:'💡 Flooding a server until it crashes — like millions of calls on one phone line.',Botnet:'💡 Devices secretly used in a criminal network. Keep software updated.',DW_Leak:'💡 A ransomware gang hacked this organisation and published stolen data on the dark web.',CVE:'💡 A numbered record of a known software flaw that attackers can exploit.',KEV:'💡 CISA\'s list of bugs being actively exploited RIGHT NOW. Patch immediately.',C2:'💡 A server remotely controlling infected computers — the attacker\'s command centre.'};
+
+// ══════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════
+let mode='beg',iFilter='all',vView='cve';
+window.allEvents=[];window.warCache=[];window.kevCache=[];window.feodoCache=[];window.rwCache=[];
+let nvdData=[],feedItems=[],feedN=0;
+
+setInterval(function(){try{$('utc').textContent=new Date().toUTCString().split(' ')[4]+' UTC';}catch(e){}},1000);
+
+// ══════════════════════════════════════════════════════════
+// LAYOUT HELPERS
+// ══════════════════════════════════════════════════════════
+function showP(id,btn){
+  document.querySelectorAll('#panels .panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('#bnav .bn').forEach(function(b){b.classList.remove('on');});
+  var el=$('pn-'+id);if(el)el.classList.add('active');
+  if(btn)btn.classList.add('on');
+  if(id==='map')renderMapPanel(false);
+}
+function showCP(id,btn){
+  document.querySelectorAll('#center-panel .cpanel').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('#center-tabs .ctab').forEach(function(b){b.classList.remove('on');});
+  var el=$('cp-'+id);if(el)el.classList.add('on');
+  if(btn)btn.classList.add('on');
+  if(id==='maplist')renderMapPanel(true);
+}
+function showStream(id,btn){
+  ['wars','orgs','yt','twitter'].forEach(function(k){var el=$('stream-'+k);if(el)el.style.display=k===id?'':'none';});
+  document.querySelectorAll('#stream-tabs .stab').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+}
+function showMobStream(id,btn){
+  ['wars','orgs','yt','osint'].forEach(function(k){var el=$('mob-'+k+'-body');if(el)el.style.display=k===id?'':'none';});
+  document.querySelectorAll('#mob-stream-tabs .tab').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+}
+
+// Mode tabs — handle both desktop and mobile
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-m]');
+  if(!b)return;
+  document.querySelectorAll('[data-m]').forEach(function(t){
+    t.className=t.className.replace(/ ?(t\w+|on)/g,'');
   });
-}
-
-// ── Feed ───────────────────────────────────────────────────
-let feedCount = 0;
-function addFeed(type, srcCC, tgtCC, col, title, detail, sev, isWar=false) {
-  const el = $('feed');
-  if (el.querySelector('.ld')) el.innerHTML = '';
-  const ts = new Date().toUTCString().split(' ')[4];
-  const sev5 = Math.min(sev, 5);
-  const bars = Array.from({length:5}, (_,i) =>
-    `<div class="sb" style="${i<sev5?'background:'+col+';':''}"></div>`).join('');
-  const src = CCN[srcCC]||srcCC||'??';
-  const tgt = CCN[tgtCC]||tgtCC||'GLOBAL';
-  const badge = isWar
-    ? `<span class="warbadge">WARZONE</span>`
-    : `<span class="rbadge">REAL</span>`;
-  const d = document.createElement('div');
-  d.className = 'fi';
-  d.innerHTML =
-    `<div class="fi-top"><span class="fi-type" style="color:${col}">${esc(type)}</span>`+
-    `<span class="fi-ts">${ts} ${badge}</span></div>`+
-    `<div class="fi-src">${esc(src)} ──▶ ${esc(tgt)}</div>`+
-    (title  ? `<div class="fi-title">${esc(title)}</div>` : '')+
-    (detail ? `<div class="fi-desc">${esc(detail)}</div>` : '')+
-    `<div class="sevbar">${bars}</div>`;
-  el.insertBefore(d, el.firstChild);
-  while (el.children.length > 60) el.removeChild(el.lastChild);
-  feedCount++;
-  $('lbadge').textContent = feedCount;
-}
-
-// ── Render bar chart ───────────────────────────────────────
-function renderRows(elId, pairs) {
-  const el = $(elId); if (!el || !pairs.length) return;
-  const max = pairs[0][1] || 1;
-  el.innerHTML = pairs.map(([label, val], i) => {
-    const col = C7[i % C7.length];
-    const pct = Math.round(val / max * 100);
-    return `<div class="rrow">`+
-      `<span class="rrl">${esc(label)}</span>`+
-      `<div class="rrbt"><div class="rrbf" style="width:${pct}%;background:${col}"></div></div>`+
-      `<span class="rrv" style="color:${col}">${val}</span>`+
-      `</div>`;
-  }).join('');
-}
-
-function sevCol(s) {
-  const u = (s||'').toUpperCase();
-  return u==='CRITICAL'?'#ff2545':u==='HIGH'?'#ff7b00':u==='MEDIUM'?'#ffd60a':u==='LOW'?'#00ff88':'#7ab0c0';
-}
-function sevCls(s) {
-  const u=(s||'').toUpperCase();
-  return u==='CRITICAL'?'C':u==='HIGH'?'H':u==='MEDIUM'?'M':u==='LOW'?'L':'N';
-}
-
-// ── CYBERWARFARE INTEL (curated + real context) ────────────
-const WARDATA = [
-  {
-    actors:'Iran → Israel',src:'IR',tgt:'IL',col:'#ff2545',
-    title:'IRGC-linked group OilRig intensifies attacks on Israeli infrastructure',
-    desc:'Spearphishing campaigns targeting Israeli government ministries and defense contractors. Use of backdoor malware LIONTAIL observed. Correlates with regional escalation post-Oct 2023.',
-    type:'APT / Espionage',tags:['Iran','OilRig','APT34','Spearphishing'],date:'Ongoing 2024-25',sev:5
-  },
-  {
-    actors:'Iran → US Gov',src:'IR',tgt:'US',col:'#ff2545',
-    title:'Iranian APT targeting US election infrastructure and defense contractors',
-    desc:'CISA & FBI joint advisory: Iranian actors conducting credential harvesting against US political campaigns and DoD supply chain. Attributed to MuddyWater/MERCURY clusters.',
-    type:'State Actor',tags:['MuddyWater','Election','DoD'],date:'2024-2025',sev:5
-  },
-  {
-    actors:'Russia → Ukraine',src:'RU',tgt:'UA',col:'#ff2545',
-    title:'Sandworm group deploys destructive wiper targeting Ukrainian power grid',
-    desc:'GRU Unit 74455 (Sandworm) continues ICS/SCADA attacks on Ukrainian energy infrastructure. FrostyGoop malware disrupted Lviv heating systems. Coordinated with kinetic strikes.',
-    type:'Critical Infrastructure',tags:['Sandworm','Wiper','ICS','GRU'],date:'Jan 2024',sev:5
-  },
-  {
-    actors:'Russia → NATO',src:'RU',tgt:'DE',col:'#ff2545',
-    title:'GRU APT28 breaches German Social Democrats and EU political targets',
-    desc:'Fancy Bear (APT28) compromised SPD email servers over extended period. Germany expelled Russian diplomat. NATO member states on elevated alert for pre-election interference operations.',
-    type:'Political Espionage',tags:['APT28','Fancy Bear','NATO','GRU'],date:'May 2024',sev:4
-  },
-  {
-    actors:'China → Taiwan',src:'CN',tgt:'TW',col:'#ff7b00',
-    title:'Volt Typhoon pre-positions inside Taiwan critical infrastructure',
-    desc:'MSS-linked Volt Typhoon maintains persistent access in telecom, power and water systems. Living-off-the-land techniques evade detection. Assessed as preparation for potential Taiwan Strait crisis.',
-    type:'Pre-positioning',tags:['Volt Typhoon','MSS','Taiwan','LotL'],date:'2024-2025',sev:5
-  },
-  {
-    actors:'China → US DoD',src:'CN',tgt:'US',col:'#ff7b00',
-    title:'Salt Typhoon compromises US telecom giants — calls intercepted',
-    desc:'Chinese APT Salt Typhoon breached AT&T, Verizon, Lumen. Accessed lawful intercept systems. US officials call it worst telecom hack in history. NSA, FBI, CISA joint advisory issued.',
-    type:'Telecom Espionage',tags:['Salt Typhoon','AT&T','Verizon','NSA'],date:'Dec 2024',sev:5
-  },
-  {
-    actors:'Israel → Iran',src:'IL',tgt:'IR',col:'#ffd60a',
-    title:'Cyberattack disrupts Iran fuel distribution network — 70% stations offline',
-    desc:'Attributed to Israeli intelligence. Gonjeshke Darandeh group claimed attack on ISNA fuel distribution system. 70% of Iranian gas stations taken offline. Follows pattern of Predatory Sparrow ops.',
-    type:'Sabotage',tags:['Israel','Gonjeshke','Fuel','Sabotage'],date:'Dec 2023',sev:4
-  },
-  {
-    actors:'N.Korea → Crypto',src:'KP',tgt:'US',col:'#bf5af2',
-    title:'Lazarus Group steals $600M+ in crypto to fund DPRK weapons program',
-    desc:'Lazarus Group (RGB Bureau 121) continues targeting DeFi protocols and crypto exchanges. Ronin Network, Harmony Bridge attacks traced to DPRK. Funds assessed to support ballistic missile program.',
-    type:'Financial Crime',tags:['Lazarus','DPRK','Crypto','RGB'],date:'2024',sev:4
-  },
-  {
-    actors:'Houthi/Iran → Gulf',src:'IR',tgt:'SA',col:'#ff7b00',
-    title:'Iran-backed groups deploy wiper malware against Saudi Aramco contractors',
-    desc:'Shamoon variant targeting Saudi Arabian energy sector. Linked to Iran\'s cyber operations supporting Houthi campaign. Saudi and UAE financial sector also targeted with destructive payloads.',
-    type:'Critical Infrastructure',tags:['Shamoon','Saudi Aramco','Houthi','Wiper'],date:'2024',sev:4
-  },
-  {
-    actors:'Russia → Poland/Baltics',src:'RU',tgt:'PL',col:'#ff2545',
-    title:'GRU intensifies hybrid operations against NATO eastern flank',
-    desc:'Physical sabotage + cyber ops targeting Polish rail, Estonian telecom, and Lithuanian energy. Wiperbot deployed against Baltic state government portals. NATO Article 5 consultations initiated.',
-    type:'Hybrid Warfare',tags:['GRU','NATO','Hybrid','Baltic'],date:'2024-2025',sev:4
-  },
-  {
-    actors:'Iran → Albania',src:'IR',tgt:'AL',col:'#ff2545',
-    title:'MOIS destroys Albanian government IT — NATO Article 5 considered',
-    desc:'Iranian MOIS attacked Albanian government infrastructure, destroying systems and leaking data. Albania expelled Iranian ambassador. First time NATO considered Article 5 in response to state cyberattack.',
-    type:'Destructive Attack',tags:['MOIS','Albania','NATO','Wiper'],date:'2022-23 Ongoing',sev:5
-  },
-  {
-    actors:'China → SE Asia',src:'CN',tgt:'PH',col:'#ff7b00',
-    title:'APT41 targets Philippines gov amid South China Sea tensions',
-    desc:'Double Dragon (APT41) compromises Philippine DND, NCMB, and coast guard systems. Exfiltrating South China Sea patrol data and negotiation communications as maritime standoffs escalate.',
-    type:'Espionage',tags:['APT41','Philippines','SCS','PLA'],date:'2024-2025',sev:4
-  },
-];
-
-function renderWarzone() {
-  const list = $('war-list');
-  list.innerHTML = WARDATA.map((w,i) => {
-    const tags = w.tags.map(t =>
-      `<span class="war-tag" style="color:${w.col};border-color:${w.col}40">${esc(t)}</span>`).join('');
-    return `<div class="warcard">
-      <div class="war-top">
-        <span class="war-actors">${esc(w.actors)}</span>
-        <span style="font-size:6px;color:var(--tlo)">${esc(w.date)}</span>
-      </div>
-      <div style="font-size:6px;color:${w.col};letter-spacing:1px;margin-bottom:3px">${esc(w.type)}</div>
-      <div class="war-title">${esc(w.title)}</div>
-      <div class="war-desc">${esc(w.desc)}</div>
-      <div class="war-tags">${tags}</div>
-    </div>`;
-  }).join('');
-
-  // Feed warzone events in sequence
-  WARDATA.slice(0,6).forEach((w, i) => {
-    setTimeout(() => {
-      addFeed(w.type, w.src, w.tgt, w.col, w.actors, w.title, w.sev, true);
-      launchArc(w.src, w.tgt, w.col);
-      addPing(w.src, w.col);
-      addPing(w.tgt, w.col, 400);
-    }, i * 1200);
+  document.querySelectorAll('[data-m="'+b.dataset.m+'"]').forEach(function(t){
+    t.classList.add('t'+b.dataset.m);
   });
+  mode=b.dataset.m;
+  var descs={beg:'Beginner — plain English explanations on every threat event.',pro:'Pro — full CVE/KEV, TTP, IOC details and raw feed data.',war:'Warfare — nation-state APT, ICS/SCADA, critical infra only.'};
+  [$('mdesc'),$('mdesc-d')].forEach(function(el){if(el)el.textContent=descs[mode];});
+  renderFeed();renderIntel();renderVuln();
+});
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-t]');if(!b)return;
+  var grp=b.closest('.tabs,.stabs');
+  if(!grp||!grp.id.includes('itabs'))return;
+  grp.querySelectorAll('[data-t]').forEach(function(t){t.classList.remove('on');});
+  b.classList.add('on');iFilter=b.dataset.t;renderIntel();
+});
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-v]');if(!b)return;
+  var grp=b.closest('.tabs,.stabs');
+  if(!grp)return;
+  grp.querySelectorAll('[data-v]').forEach(function(t){t.classList.remove('on');});
+  b.classList.add('on');vView=b.dataset.v;renderVuln();
+});
 
-  // Ongoing warzone arc pulses
-  setInterval(() => {
-    const w = WARDATA[Math.floor(Math.random()*WARDATA.length)];
-    launchArc(w.src, w.tgt, w.col);
-    addPing(w.src, w.col);
-  }, 3500);
+// ══════════════════════════════════════════════════════════
+// MAP — DESKTOP uses #mapw, mobile uses #mapw-mob
+// Both share window.allEvents data
+// ══════════════════════════════════════════════════════════
+var mapState={proj:null,path:null,proj_m:null,path_m:null};
+var arcs=[],arcs_m=[];
+var cvs=null,ctx=null,cvs_m=null,ctx_m=null;
+
+function mkProj(W,H){
+  mapState.proj=d3.geoNaturalEarth1().scale(W/5.8).translate([W/2,H/2]);
+  mapState.path=d3.geoPath().projection(mapState.proj);
+}
+function mkProj_m(W,H){
+  mapState.proj_m=d3.geoNaturalEarth1().scale(W/5.8).translate([W/2,H/2]);
+  mapState.path_m=d3.geoPath().projection(mapState.proj_m);
+}
+function xy(iso,mob){
+  var pr=mob?mapState.proj_m:mapState.proj;
+  if(!pr||!LL[iso])return null;
+  var p=pr(LL[iso]);return(isNaN(p[0])||isNaN(p[1]))?null:{x:p[0],y:p[1]};
 }
 
-// ── FEODO TRACKER ─────────────────────────────────────────
-async function loadFeodo() {
-  const r = await fetch('https://feodotracker.abuse.ch/downloads/ipblocklist.json');
-  if (!r.ok) throw new Error('Feodo HTTP ' + r.status);
-  const j = await r.json();
-  const items = j.results || [];
-  if (!items.length) throw new Error('Feodo empty');
-
-  $('ms-c2').textContent = items.length.toLocaleString();
-  $('h-c2').textContent  = items.length.toLocaleString();
-
-  const byCC = {}, byFam = {};
-  for (const ip of items) {
-    const cc  = ip.country || 'XX';
-    const fam = ip.malware || 'Unknown';
-    byCC[cc]   = (byCC[cc]  ||0)+1;
-    byFam[fam] = (byFam[fam]||0)+1;
-  }
-  $('ms-cc').textContent = Object.keys(byCC).length;
-
-  const famPairs = Object.entries(byFam).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const ccPairs  = Object.entries(byCC ).sort((a,b)=>b[1]-a[1]).slice(0,8)
-                     .map(([cc,n])=>[CCN[cc]||cc, n]);
-
-  renderRows('r-families', famPairs);
-  renderRows('r-countries', ccPairs);
-
-  const TGTS = ['US','DE','GB','FR','JP','AU','CA','NL'];
-  items.slice(0,14).forEach((ip, i) => {
-    setTimeout(() => {
-      const cc = ip.country||'XX', tgt = TGTS[i%TGTS.length];
-      addFeed(`C2 — ${ip.malware||'Botnet'}`, cc, tgt, '#ff2545',
-        `${ip.ip_address}:${ip.port||443}`, `Status: ${ip.status||'active'}`, 4);
-      launchArc(cc, tgt, '#ff2545');
-      addPing(cc, '#ff2545');
-    }, 7000 + i*300); // delay so war events show first
-  });
-
-  const topCCs = Object.entries(byCC).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([cc])=>cc);
-  setInterval(() => {
-    const src = topCCs[Math.floor(Math.random()*topCCs.length)];
-    const tgt = TGTS[Math.floor(Math.random()*TGTS.length)];
-    launchArc(src, tgt, '#ff2545');
-    addPing(src, '#ff2545');
-    if (Math.random() < 0.2) {
-      const ip = items[Math.floor(Math.random()*items.length)];
-      addFeed(`C2 — ${ip.malware||'Botnet'}`, ip.country||'XX', tgt,
-        '#ff2545', ip.ip_address, null, 3);
-    }
-  }, 2200);
-
-  return items.length;
+function initMap(svgId,mapwId,isMob){
+  var el=$(mapwId);if(!el)return;
+  var W=el.clientWidth,H=el.clientHeight;
+  if(!W||!H)return;
+  var svg=d3.select('#'+svgId);
+  svg.attr('width',W).attr('height',H).attr('viewBox','0 0 '+W+' '+H);
+  if(isMob)mkProj_m(W,H);else mkProj(W,H);
+  var pr=isMob?mapState.proj_m:mapState.proj,pa=isMob?mapState.path_m:mapState.path;
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','#020406');
+  svg.append('path').datum(d3.geoGraticule()()).attr('d',pa).attr('fill','none').attr('stroke','rgba(0,200,255,.02)').attr('stroke-width','.4');
+  return{svg,W,H,pr,pa};
 }
 
-// ── URLHAUS ───────────────────────────────────────────────
-async function loadURLhaus() {
-  const r = await fetch('https://urlhaus-api.abuse.ch/v1/urls/recent/limit/100/', {
-    method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}
-  });
-  if (!r.ok) throw new Error('URLhaus HTTP ' + r.status);
-  const j = await r.json();
-  const urls = j.urls || [];
+// Load world data once, share between both maps
+var worldData=null;
+xhrGet('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json',15000)
+  .then(function(r){return r.json();})
+  .then(function(world){
+    worldData=world;
+    setupDesktopMap(world);
+    setupMobileMap(world);
+  }).catch(function(e){console.error('Map:',e);});
 
-  $('ms-url').textContent = urls.length + '+';
-
-  const byT = {};
-  for (const u of urls) { const t=u.threat||'unknown'; byT[t]=(byT[t]||0)+1; }
-  const tPairs = Object.entries(byT).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  renderRows('r-ttypes', tPairs);
-
-  urls.slice(0, 6).forEach((u, i) => {
-    setTimeout(() => {
-      let host='??'; try{host=new URL(u.url).hostname;}catch(e){}
-      addFeed('Malware URL','??','BROWSER','#ff7b00',
-        host, `${u.threat||'unknown'} | ${(u.tags||[]).join(',')||'untagged'}`, 3);
-    }, 10000 + i*600);
-  });
-
-  return urls.length;
-}
-
-// ── NVD ───────────────────────────────────────────────────
-async function loadNVD() {
-  const end   = new Date().toISOString().split('.')[0];
-  const start = new Date(Date.now()-7*86400000).toISOString().split('.')[0];
-  const r = await fetch(
-    `https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate=${start}&pubEndDate=${end}&resultsPerPage=40`,
-    { headers:{'User-Agent':'CYBERMON/1.0'} }
-  );
-  if (!r.ok) throw new Error('NVD HTTP ' + r.status);
-  const j = await r.json();
-  const vulns = j.vulnerabilities || [];
-  const total = j.totalResults || vulns.length;
-
-  $('ms-cve').textContent = total.toLocaleString();
-  $('h-cves').textContent  = total.toLocaleString();
-  $('cve-ld').style.display = 'none';
-
-  const parsed = vulns.map(v => {
-    const cve = v.cve;
-    const m = cve.metrics?.cvssMetricV31?.[0]
-           || cve.metrics?.cvssMetricV30?.[0]
-           || cve.metrics?.cvssMetricV2?.[0];
-    return {
-      id:    cve.id,
-      desc:  (cve.descriptions?.find(d=>d.lang==='en')?.value||'').slice(0,150),
-      sev:   m?.cvssData?.baseSeverity||'UNKNOWN',
-      score: m?.cvssData?.baseScore,
-      pub:   cve.published?.split('T')[0]||'',
-      cwe:   cve.weaknesses?.[0]?.description?.[0]?.value||'',
-    };
-  }).sort((a,b)=>(b.score||0)-(a.score||0));
-
-  $('cve-list').innerHTML = parsed.slice(0,25).map(cve => {
-    const col = sevCol(cve.sev), cls = sevCls(cve.sev);
-    return `<div class="cvecard" onclick="window.open('https://nvd.nist.gov/vuln/detail/${cve.id}','_blank')">`+
-      `<div class="cvetop"><span class="cveid">${esc(cve.id)}</span>`+
-      `<span class="cvesev ${cls}" style="background:${col}18;border:1px solid ${col}40">${esc(cve.sev)} ${cve.score||''}</span></div>`+
-      `<div class="cvedesc">${esc(cve.desc)}</div>`+
-      `<div class="cvemeta">${esc(cve.cwe?cve.cwe+' • ':'')}${esc(cve.pub)}</div>`+
-      `</div>`;
-  }).join('');
-
-  parsed.filter(c=>c.sev==='CRITICAL').slice(0,3).forEach((cve,i)=>{
-    setTimeout(()=>{
-      addFeed('Critical CVE','??','GLOBAL','#ff2545',cve.id,cve.desc.slice(0,65),5);
-    }, 13000+i*2000);
-  });
-
-  return parsed.length;
-}
-
-// ── CISA ──────────────────────────────────────────────────
-async function loadCISA() {
-  const r = await fetch('https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json');
-  if (!r.ok) throw new Error('CISA HTTP '+r.status);
-  const j = await r.json();
-  const vulns = (j.vulnerabilities||[]).sort((a,b)=>new Date(b.dateAdded)-new Date(a.dateAdded));
-
-  $('h-kev').textContent   = vulns.length.toLocaleString();
-  $('cisa-ld').style.display = 'none';
-
-  $('cisa-list').innerHTML = vulns.slice(0,25).map(v =>
-    `<div class="cisacard" onclick="window.open('https://nvd.nist.gov/vuln/detail/${v.cveID}','_blank')">`+
-    `<div class="cisatop"><span class="cisaid">${esc(v.cveID)}</span>`+
-    `<span class="cisatag">EXPLOITED</span></div>`+
-    `<div class="cisaprod">${esc(v.vendorProject)} — ${esc(v.product)}</div>`+
-    `<div class="cisadesc">${esc(v.shortDescription)}</div>`+
-    `<div class="cisameta">Added ${esc(v.dateAdded)} • Due ${esc(v.dueDate)}</div>`+
-    `</div>`
-  ).join('');
-
-  vulns.slice(0,3).forEach((v,i)=>{
-    setTimeout(()=>{
-      addFeed('CISA KEV','??','GLOBAL','#ff7b00',
-        v.cveID+' — '+v.vendorProject,v.shortDescription.slice(0,65),4);
-    },16000+i*1500);
-  });
-
-  return vulns.length;
-}
-
-// ── RSS ───────────────────────────────────────────────────
-const RSS_FEEDS = [
-  {name:'Krebs on Security', url:'https://krebsonsecurity.com/feed/',            col:'#ff2545'},
-  {name:'The Hacker News',   url:'https://feeds.feedburner.com/TheHackersNews',  col:'#ff7b00'},
-  {name:'BleepingComputer',  url:'https://www.bleepingcomputer.com/feed/',       col:'#00d4ff'},
-  {name:'SANS ISC',          url:'https://isc.sans.edu/rssfeed_full.xml',        col:'#ffd60a'},
-  {name:'CISA Advisories',   url:'https://www.cisa.gov/cybersecurity-advisories/all.xml', col:'#bf5af2'},
-];
-function parseRSS(xml) {
-  try {
-    const doc = new DOMParser().parseFromString(xml,'text/xml');
-    return [...doc.querySelectorAll('item,entry')].slice(0,8).map(item=>{
-      const g=(...tags)=>{for(const t of tags){const el=item.querySelector(t);if(el&&el.textContent.trim())return el.textContent.trim();}return'';};
-      return {
-        title:   g('title'),
-        link:    g('link','id')||item.querySelector('link')?.getAttribute('href')||'',
-        pubDate: g('pubDate','published','updated'),
-        snippet: g('description','summary','content').replace(/<[^>]+>/g,'').slice(0,160),
-      };
+function setupDesktopMap(world){
+  var el=$('mapw');if(!el)return;
+  var W=el.clientWidth,H=el.clientHeight;if(!W||!H)return;
+  var svg=d3.select('#msvg');
+  svg.attr('width',W).attr('height',H).attr('viewBox','0 0 '+W+' '+H);
+  mkProj(W,H);
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','#020406');
+  svg.append('path').datum(d3.geoGraticule()()).attr('d',mapState.path).attr('fill','none').attr('stroke','rgba(0,200,255,.02)').attr('stroke-width','.4');
+  var ft=topojson.feature(world,world.objects.countries);
+  svg.selectAll('.land').data(ft.features).enter().append('path')
+    .attr('class','land').attr('d',mapState.path)
+    .attr('fill','#080e16').attr('stroke','rgba(0,200,255,.07)').attr('stroke-width','.4')
+    .style('cursor','pointer')
+    .on('click',function(e,d){
+      svg.selectAll('.land').classed('sel',false).attr('fill','#080e16');
+      d3.select(this).classed('sel',true).attr('fill','#152840');
+      openModal(N2CC[+d.id]||null);
     });
-  } catch(e){return[];}
+  cvs=$('acvs');ctx=cvs.getContext('2d');
+  cvs.width=W;cvs.height=H;
+  placeHS(false);
+  new ResizeObserver(function(){
+    var w2=$('mapw').clientWidth,h2=$('mapw').clientHeight;
+    svg.attr('width',w2).attr('height',h2).attr('viewBox','0 0 '+w2+' '+h2);
+    mkProj(w2,h2);cvs.width=w2;cvs.height=h2;
+    svg.selectAll('path').attr('d',function(d){try{return mapState.path(d);}catch(e){return '';}});
+    reposHS(false);renderDots(false);
+  }).observe($('mapw'));
 }
 
-async function loadRSS() {
-  const all = [];
-  const results = await Promise.allSettled(RSS_FEEDS.map(async f=>{
-    const r = await fetch(PROXY+encodeURIComponent(f.url));
-    const j = await r.json();
-    return parseRSS(j.contents).map(it=>({...it,source:f.name,col:f.col}));
+function setupMobileMap(world){
+  var el=$('mapw-mob');if(!el)return;
+  var W=el.clientWidth,H=el.clientHeight;if(!W||!H)return;
+  var svg=d3.select('#msvg-mob');
+  svg.attr('width',W).attr('height',H).attr('viewBox','0 0 '+W+' '+H);
+  mkProj_m(W,H);
+  svg.append('rect').attr('width',W).attr('height',H).attr('fill','#020406');
+  svg.append('path').datum(d3.geoGraticule()()).attr('d',mapState.path_m).attr('fill','none').attr('stroke','rgba(0,200,255,.02)').attr('stroke-width','.4');
+  var ft=topojson.feature(world,world.objects.countries);
+  svg.selectAll('.land-m').data(ft.features).enter().append('path')
+    .attr('class','land-m').attr('d',mapState.path_m)
+    .attr('fill','#080e16').attr('stroke','rgba(0,200,255,.07)').attr('stroke-width','.4')
+    .style('cursor','pointer')
+    .on('click',function(e,d){
+      svg.selectAll('.land-m').classed('sel',false).attr('fill','#080e16');
+      d3.select(this).classed('sel',true).attr('fill','#152840');
+      openModal(N2CC[+d.id]||null);
+    });
+  cvs_m=$('acvs-mob');ctx_m=cvs_m.getContext('2d');
+  cvs_m.width=W;cvs_m.height=H;
+  placeHS(true);
+  new ResizeObserver(function(){
+    var w2=$('mapw-mob').clientWidth,h2=$('mapw-mob').clientHeight;
+    svg.attr('width',w2).attr('height',h2).attr('viewBox','0 0 '+w2+' '+h2);
+    mkProj_m(w2,h2);cvs_m.width=w2;cvs_m.height=h2;
+    svg.selectAll('path').attr('d',function(d){try{return mapState.path_m(d);}catch(e){return '';}});
+    reposHS(true);renderDots(true);
+  }).observe($('mapw-mob'));
+}
+
+// Arc animation — two separate loops for desktop and mobile
+function launchArc(s,t,col){
+  var a=xy(s,false),b=xy(t,false);
+  if(a&&b)arcs.push({sx:a.x,sy:a.y,ex:b.x,ey:b.y,col:col,p:0,spd:.004+Math.random()*.008,al:1});
+  var am=xy(s,true),bm=xy(t,true);
+  if(am&&bm)arcs_m.push({sx:am.x,sy:am.y,ex:bm.x,ey:bm.y,col:col,p:0,spd:.005+Math.random()*.009,al:1});
+}
+function bq(x0,y0,x1,y1,x2,y2,t){return{x:(1-t)*(1-t)*x0+2*(1-t)*t*x1+t*t*x2,y:(1-t)*(1-t)*y0+2*(1-t)*t*y1+t*t*y2};}
+function drawArcs(arcArr,c){
+  if(!c)return;
+  c.clearRect(0,0,(c.canvas||{width:0}).width,(c.canvas||{height:0}).height);
+  for(var i=0;i<arcArr.length;i++){
+    var a=arcArr[i];a.p=Math.min(a.p+a.spd,1);
+    var cx=(a.sx+a.ex)/2,cy=Math.min(a.sy,a.ey)-Math.abs(a.ex-a.sx)*.2;
+    for(var j=0;j<16;j++){
+      var t1=Math.max(0,a.p-j*.034),t2=Math.max(0,a.p-(j+1)*.034);
+      if(t1<=0&&t2<=0)continue;
+      var p1=bq(a.sx,a.sy,cx,cy,a.ex,a.ey,t1),p2=bq(a.sx,a.sy,cx,cy,a.ex,a.ey,t2);
+      c.beginPath();c.moveTo(p1.x,p1.y);c.lineTo(p2.x,p2.y);
+      c.strokeStyle=a.col;c.lineWidth=Math.max(.1,1.1-j*.06);c.globalAlpha=a.al*(1-j/16)*.88;c.stroke();
+    }
+    if(a.p>0){var tp=bq(a.sx,a.sy,cx,cy,a.ex,a.ey,a.p);c.beginPath();c.arc(tp.x,tp.y,2,0,Math.PI*2);c.fillStyle=a.col;c.globalAlpha=a.al;c.fill();}
+    c.globalAlpha=1;if(a.p>=1)a.al-=.018;
+  }
+  for(var k=arcArr.length-1;k>=0;k--){if(arcArr[k].al<=.01)arcArr.splice(k,1);}
+}
+(function loop(){drawArcs(arcs,ctx);drawArcs(arcs_m,ctx_m);requestAnimationFrame(loop);})();
+
+function ping(iso,col,d,mob){
+  setTimeout(function(){
+    var p=xy(iso,mob||false);if(!p)return;
+    var pngl=$(mob?'pngl-mob':'pngl');if(!pngl)return;
+    var el=document.createElement('div');el.className='pw';
+    el.style.cssText='left:'+p.x+'px;top:'+p.y+'px';
+    el.innerHTML='<div class="pc" style="background:'+col+';width:5px;height:5px"></div><div class="pr" style="border-color:'+col+'"></div>';
+    pngl.appendChild(el);setTimeout(function(){el.remove();},2400);
+  },d||0);
+}
+
+var HS_=[{i:'UA',c:'#ff2d2d'},{i:'IL',c:'#ff2d2d'},{i:'IR',c:'#ffc200'},{i:'RU',c:'#ff2d2d'},{i:'KP',c:'#c026d3'},{i:'TW',c:'#ff6a00'},{i:'CN',c:'#ff6a00'},{i:'US',c:'#1e90ff'}];
+function placeHS(mob){
+  HS_.forEach(function(h){
+    var p=xy(h.i,mob);if(!p)return;
+    var pngl=$(mob?'pngl-mob':'pngl');if(!pngl)return;
+    var el=document.createElement('div');
+    el.id=(mob?'mob-':'')+'hs-'+h.i;el.className='pw';
+    el.style.cssText='left:'+p.x+'px;top:'+p.y+'px';
+    el.innerHTML='<div class="pc" style="background:'+h.c+';box-shadow:0 0 8px '+h.c+'99;width:7px;height:7px"></div>';
+    pngl.appendChild(el);
+  });
+  setInterval(function(){var h=HS_[Math.floor(Math.random()*HS_.length)];ping(h.i,h.c,0,mob);},mob?3200:2800);
+}
+function reposHS(mob){
+  HS_.forEach(function(h){
+    var el=$((mob?'mob-':'')+'hs-'+h.i),p=xy(h.i,mob);
+    if(el&&p){el.style.left=p.x+'px';el.style.top=p.y+'px';}
+  });
+}
+
+function addEvt(iso,layer,sev,lbl,ts){
+  if(!iso||!LL[iso])return;
+  window.allEvents.push({iso:iso,layer:layer,sev:sev,lbl:lbl,ts:ts||Date.now()});
+  renderDots(false);renderDots(true);
+  var el=$('evcnt');if(el)el.textContent=window.allEvents.length;
+  var el2=$('s-evt');if(el2)el2.textContent=window.allEvents.length;
+}
+
+function renderDots(mob){
+  var dotl=$(mob?'dotl-mob':'dotl');if(!dotl)return;
+  dotl.innerHTML='';
+  var byCC={};
+  window.allEvents.forEach(function(e){if(!byCC[e.iso])byCC[e.iso]=[];byCC[e.iso].push(e);});
+  Object.keys(byCC).forEach(function(iso){
+    var evs=byCC[iso],p=xy(iso,mob);if(!p)return;
+    var cnt=evs.length;
+    var top=evs.find(function(e){return e.layer==='apt';})||evs.find(function(e){return e.layer==='dw';})||evs[0];
+    var col=top.layer==='apt'?'#ff2d2d':top.layer==='dw'?'#cc0000':top.layer==='kev'?'#c026d3':top.layer==='c2'?'#ff6a00':'#ffc200';
+    var sz=cnt>50?26:cnt>20?22:cnt>8?17:cnt>3?13:10;
+    var el=document.createElement('div');
+    el.style.cssText='position:absolute;left:'+p.x+'px;top:'+p.y+'px;width:'+sz+'px;height:'+sz+'px;border-radius:50%;background:'+col+';transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;font-size:'+Math.max(7,sz-7)+'px;font-weight:700;font-family:var(--mono);color:#fff;box-shadow:0 0 12px '+col+'55;cursor:pointer;z-index:6';
+    el.textContent=cnt>1?cnt:'';
+    el.onclick=function(ev){ev.stopPropagation();openModal(iso);};
+    dotl.appendChild(el);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// SOURCE STATUS
+// ══════════════════════════════════════════════════════════
+function setSrc(k,ok,lbl){
+  var c=ok?'var(--grn)':'var(--red)';
+  var d=$('d-'+k),t=$('t-'+k);
+  if(d)d.style.background=c;if(t){t.style.color=c;t.textContent=lbl;}
+}
+
+// ══════════════════════════════════════════════════════════
+// FEED RENDERING — writes to both desktop and mobile elements
+// ══════════════════════════════════════════════════════════
+function addFeed(layer,src,tgt,col,type_,title,desc,tags,link,fm){
+  feedItems.unshift({layer:layer,src:src,tgt:tgt,col:col,type_:type_,title:title,desc:desc,tags:tags||[],link:link||'',fm:fm||'pro',ts:new Date().toUTCString().slice(17,25)});
+  if(feedItems.length>250)feedItems.pop();
+  feedN++;$('fcnt').textContent=feedN;
+  var fd=$('fcnt-d');if(fd)fd.textContent=feedN;
+  renderFeed();
+}
+
+function renderFeed(){
+  var vis=feedItems.filter(function(f){return mode==='pro'||(mode==='beg'&&(f.fm==='beg'||f.fm==='all'))||(mode==='war'&&(f.fm==='war'||f.fm==='all'));});
+  var html=vis.length?vis.slice(0,60).map(function(f){
+    var bexp=mode==='beg'?(BEG[f.type_]||BEG[f.layer]||''):'';
+    var tags=(f.tags||[]).map(function(t){return'<span class="ctag" style="color:'+t[1]+';border-color:'+t[1]+'25;background:'+t[1]+'0d">'+esc(t[0])+'</span>';}).join('');
+    var click=f.link?'onclick="window.open('+JSON.stringify(f.link)+')"':'';
+    return'<div class="card" '+click+'><div class="ct"><span class="ctype" style="color:'+f.col+'">'+esc(f.type_)+'</span><span class="ctime">'+f.ts+'</span></div><div class="cvia">'+esc(CN_[f.src]||f.src||'?')+' → '+esc(CN_[f.tgt]||f.tgt||'Global')+'</div>'+(f.title?'<div class="ctit">'+esc(f.title)+'</div>':'')+(f.desc?'<div class="cdesc">'+esc(f.desc)+'</div>':'')+(bexp?'<div class="cbeg">'+esc(bexp)+'</div>':'')+(tags?'<div class="ctags">'+tags+'</div>':'')+'</div>';
+  }).join(''):'<div class="ld" style="flex-direction:column;align-items:flex-start;gap:6px"><div style="display:flex;align-items:center;gap:7px"><div class="sp"></div><span>Feeds loading…</span></div><div style="font-size:8px;color:var(--mu2);font-family:var(--mono);padding-left:4px;line-height:1.8">RSS + CISA load in ~20s</div></div>';
+  [$('fbody'),$('fbody-d')].forEach(function(el){if(el)el.innerHTML=html;});
+}
+
+function renderIntel(){
+  var items=[].concat(window.warCache);
+  if(iFilter==='apt')items=items.filter(function(w){return['RU','CN','IR','KP','BY'].indexOf(w.src)>=0;});
+  else if(iFilter==='rw')items=items.filter(function(w){return/ransom/i.test(w.atype||'');});
+  else if(iFilter==='vuln')items=items.filter(function(w){return/zero.day|supply|exploit/i.test(w.atype||'');});
+  else if(iFilter==='phish')items=items.filter(function(w){return/phish|cred/i.test(w.atype||'');});
+  if(mode==='beg')items=items.filter(function(w){return['Ransomware','Phishing','Credential Theft','Botnet','DDoS'].some(function(k){return(w.atype||'').indexOf(k)>=0;});});
+  else if(mode==='war')items=items.filter(function(w){return['RU','CN','IR','KP','BY'].indexOf(w.src)>=0||['Destructive Wiper','Espionage','Critical Infrastructure'].some(function(k){return(w.atype||'').indexOf(k)>=0;});});
+  var cnt=items.length;
+  [$('icnt')].forEach(function(el){if(el)el.textContent=cnt;});
+  var html=cnt?items.slice(0,40).map(function(w){
+    var d=w.pub?new Date(w.pub).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+    var hr=w.link?'onclick="window.open('+JSON.stringify(w.link)+')"':'';
+    var bexp=mode==='beg'?(BEG[w.atype]||BEG[(w.atype||'').replace(/ /g,'_')]||''):'';
+    return'<div class="card" '+hr+'><div class="ct"><span class="ctype" style="color:'+w.col+'">'+esc(w.atype||'Intel')+'</span><span class="ctime">'+d+'</span></div>'+(w.src?'<div class="cvia">'+esc(CN_[w.src]||w.src)+' → '+esc(CN_[w.tgt]||w.tgt||'Multiple')+'</div>':'')+'<div class="ctit">'+esc(w.title)+'</div>'+(w.desc?'<div class="cdesc">'+esc(w.desc.slice(0,110))+'</div>':'')+(bexp?'<div class="cbeg">'+esc(bexp)+'</div>':'')+'<div class="ctags"><span class="ctag" style="color:var(--mu);border-color:var(--mu2);background:var(--mu2)">'+esc(w.feed)+'</span></div></div>';
+  }).join(''):'<div class="ld"><div class="sp"></div>Fetching RSS feeds…</div>';
+  [$('ibody'),$('ibody-d')].forEach(function(el){if(el)el.innerHTML=html;});
+  // Also update live feed stream
+  renderFeedStream();
+}
+
+function renderFeedStream(){
+  var all=window.warCache.slice(0,30);
+  var html=all.map(function(w){
+    var d=w.pub?new Date(w.pub).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+    var hr=w.link?'onclick="window.open('+JSON.stringify(w.link)+')"':'';
+    return'<div class="stream-item" '+hr+'>'+'<div class="si-title"><span class="si-live"></span>'+esc(w.title)+'</div><div class="si-meta">'+esc(w.feed)+' · '+d+(w.src?' · '+esc(CN_[w.src]||w.src):'')+'</div></div>';
+  }).join('');
+  [$('feed-stream-body'),$('mob-rss-body')].forEach(function(el){if(el)el.innerHTML=html||'<div class="ld"><div class="sp"></div>Loading feeds…</div>';});
+}
+
+var sc=function(s){return s==='CRITICAL'?'#ff2d2d':s==='HIGH'?'#ff6a00':s==='MEDIUM'?'#ffc200':s==='LOW'?'#00e676':'#4a6580';};
+function renderVuln(){
+  var bodies=[$('vbody'),$('vbody-d')];
+  var ldrs=[$('vldr'),$('vldr-d')];
+  ldrs.forEach(function(el){if(el)el.style.display='none';});
+  var html='';
+  if(vView==='cve'){
+    var wkw=['ics','scada','industrial','router','firewall','vpn','plc'];
+    var d=nvdData.filter(function(c){return mode==='beg'?['CRITICAL','HIGH'].indexOf(c.sev)>=0:mode==='war'?wkw.some(function(k){return c.desc.toLowerCase().indexOf(k)>=0;})||c.sev==='CRITICAL':true;}).slice(0,30);
+    var cnt=d.length;[$('vcnt')].forEach(function(el){if(el)el.textContent=cnt;});
+    html=d.length?d.map(function(c){var col=sc(c.sev);return'<div class="cvc" onclick="window.open(\'https://nvd.nist.gov/vuln/detail/'+c.id+'\')"><div class="cvt"><span class="cvid">'+esc(c.id)+'</span><span class="cvsev" style="color:'+col+';background:'+col+'18;border:1px solid '+col+'30">'+esc(c.sev)+' '+c.score+'</span></div><div class="cvd">'+esc(c.desc)+'</div>'+(mode==='beg'?'<div class="cvbeg">💡 CVSS '+c.score+'/10 — '+(c.sev==='CRITICAL'?'Patch IMMEDIATELY.':'Apply patch ASAP.')+'</div>':'')+'<div class="cvmeta">'+esc(c.pub)+' · NVD NIST</div></div>';}).join(''):'<div class="ld" style="color:var(--mu)">No CVEs match this filter.</div>';
+  } else if(vView==='kev'){
+    var kev=window.kevCache;[$('vcnt')].forEach(function(el){if(el)el.textContent=kev.length;});
+    html=kev.length?kev.slice(0,30).map(function(v){return'<div class="cvc" onclick="window.open(\'https://nvd.nist.gov/vuln/detail/'+v.cveID+'\')"><div class="cvt"><span class="cvid">'+esc(v.cveID)+'</span><span class="cvsev" style="color:var(--red);background:rgba(255,45,45,.1);border:1px solid rgba(255,45,45,.25)">EXPLOITED</span></div><div class="cvd"><strong style="color:var(--tx)">'+esc(v.vendorProject)+' — '+esc(v.product)+'</strong></div><div class="cvd">'+esc((v.shortDescription||'').slice(0,100))+'</div>'+(mode==='beg'?'<div class="cvbeg">💡 '+esc(v.vendorProject)+' being exploited NOW. Patch by '+esc(v.dueDate)+'.</div>':'')+'<div class="cvmeta">Added '+esc(v.dateAdded)+' · CISA KEV</div></div>';}).join(''):'<div class="ld"><div class="sp"></div>Loading CISA KEV…</div>';
+  } else if(vView==='dw'){
+    var rw=window.rwCache;[$('vcnt')].forEach(function(el){if(el)el.textContent=rw.length;});
+    html=(rw.length?'<div class="wbox">☠ <a href="https://www.ransomware.live" target="_blank">ransomware.live</a> — legal OSINT. All victim data already public on dark web leak sites.</div>'+rw.slice(0,40).map(function(v){var d=v.discovered?new Date(v.discovered).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'}):'';var cc=VCC[v.country]||'';return'<div class="dcard" onclick="window.open(\'https://www.ransomware.live\')"><div class="dtop"><span class="dgrp">☠ '+esc(v.group_name||'?')+'</span><span class="ddate">'+d+'</span></div><div class="dvic">'+esc(v.victim_name||'[Undisclosed]')+'</div><div class="dmeta">'+(cc?(FL[cc]||'')+esc(CN_[cc]||v.country)+' · ':'')+esc(v.activity||'?')+'</div>'+(mode==='beg'?'<div class="cbeg">'+esc(BEG.DW_Leak)+'</div>':'')+'</div>';}).join(''):'<div class="ld"><div class="sp"></div>Loading ransomware.live…</div>');
+  } else {
+    html=!window.feodoCache.length?'<div class="kinp"><label class="klbl">abuse.ch Auth-Key (free)</label><div class="krow"><input class="kin" id="akey" type="password" placeholder="Free key at auth.abuse.ch"><button class="kgo" onclick="loadAbuse()">Load</button></div></div><div class="ibox">Feodo Tracker: live C2 botnet IPs. Get free key at <a href="https://auth.abuse.ch" target="_blank">auth.abuse.ch</a></div>':window.feodoCache.filter(function(x){return x.status==='online';}).slice(0,30).map(function(ip){return'<div class="cvc"><div class="cvt"><span class="cvid" style="color:var(--org)">'+esc(ip.malware||'Botnet')+'</span><span class="cvsev" style="color:var(--grn);background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.2)">ONLINE</span></div><div class="cvd" style="font-family:var(--mono);font-size:8px">'+esc(ip.ip_address)+':'+(ip.port||443)+'</div>'+(mode==='beg'?'<div class="cvbeg">'+esc(BEG.C2)+'</div>':'')+'<div class="cvmeta">'+esc(CN_[ip.country]||ip.country||'?')+' · Feodo</div></div>';}).join('');
+  }
+  bodies.forEach(function(el){if(el)el.innerHTML=html;});
+}
+
+// ══════════════════════════════════════════════════════════
+// COUNTRY PROFILES & MAP LIST
+// ══════════════════════════════════════════════════════════
+const COUNTRY_PROFILES={RU:{s:88,threat:'CRITICAL',role:'Threat Actor',brief:'Home of GRU/FSB APT units. Operates Sandworm, APT28, APT29. Conducts destructive wiper attacks, global espionage, election interference. Primary cyber warfare state.'},CN:{s:82,threat:'CRITICAL',role:'Threat Actor',brief:'MSS/PLA Unit 61398. Volt Typhoon pre-positioning in US critical infrastructure. Salt Typhoon telecom espionage. Largest state cyber workforce globally.'},KP:{s:78,threat:'CRITICAL',role:'Threat Actor',brief:'Lazarus Group funds regime via crypto heists ($3B+ stolen). Kimsuky espionage. Andariel targets defence. Sanctions bypass via cybercrime.'},IR:{s:72,threat:'HIGH',role:'Threat Actor',brief:'IRGC-linked APT33/34/35. OilRig targets Middle East energy. Charming Kitten espionage. Retaliatory attacks on Israel/US infrastructure.'},BY:{s:58,threat:'HIGH',role:'Proxy Actor',brief:'Gamaredon/UNC1151 target Ukraine. Close GRU coordination. Proxies Russian operations with deniability.'},UA:{s:75,threat:'HIGH',role:'Conflict Zone',brief:'Primary target of Russian cyber warfare. Sandworm destroyed power grids (2015/2016). Constant wiper campaigns. Developing offensive capability.'},IL:{s:65,threat:'HIGH',role:'Dual',brief:'Unit 8200 elite capability (Stuxnet co-creator). Constant Iran/Hezbollah targeting. High-value espionage target.'},US:{s:55,threat:'HIGH',role:'Primary Target',brief:'Most targeted nation. SolarWinds, Colonial Pipeline, Microsoft Exchange mass exploitation. NSA/Cyber Command leads defence. CISA protects critical infrastructure.'},TW:{s:62,threat:'HIGH',role:'Conflict Zone',brief:'PLA pre-positioning (Volt Typhoon). Persistent espionage. China views reunification as justifying cyber escalation.'},DE:{s:42,threat:'MEDIUM',role:'Target',brief:'BSI tracks APT28 Bundestag hack (2015). Critical manufacturing target. Car industry IP theft. NATO member = elevated Russian targeting.'},GB:{s:44,threat:'MEDIUM',role:'Target',brief:'NCSC coordinates defence. NHS ransomware (WannaCry 2017). GCHQ world-class response. Russian/Chinese espionage ongoing.'},JP:{s:45,threat:'MEDIUM',role:'Target',brief:'MitsubishiElectric, JAXA breaches. Lazarus targets crypto exchanges. US alliance = elevated targeting. NISC strengthening posture.'},KR:{s:48,threat:'MEDIUM',role:'Target',brief:'Lazarus/Kimsuky primary target. $600M Ronin crypto hack. Presidential office breached. Defence data targeted by DPRK.'},AU:{s:38,threat:'MEDIUM',role:'Target',brief:'ASD/ACSC defends against Chinese espionage. Parliament House breach (2019). AUKUS membership elevates targeting.'},CA:{s:36,threat:'MEDIUM',role:'Target',brief:'CSE cyber centre. Five Eyes intelligence sharing. Chinese espionage against research. Ransomware hits healthcare.'},FR:{s:40,threat:'MEDIUM',role:'Target',brief:'ANSSI responds to Sandstorm/Turla campaigns. Macron campaign hack (2017). NATO presence elevates targeting.'},IN:{s:44,threat:'MEDIUM',role:'Mixed',brief:'Pakistan-linked SideWinder targets military. China espionage on LAC border. AIIMS ransomware (2022). Growing offensive doctrine.'},PK:{s:50,threat:'MEDIUM',role:'Mixed',brief:'APT36/Transparent Tribe targets India. Mutual cyber ops with India. Lax cybersecurity infrastructure.'},SG:{s:28,threat:'LOW',role:'Target',brief:'SingHealth breach (1.5M records, 2018). Advanced financial sector target. Regional APT C2 transit point.'},NL:{s:32,threat:'LOW',role:'Target',brief:'MIVD expelled Russian spies (2018). Hosts AMS-IX internet exchange. Dutch intelligence world-class.'},SE:{s:30,threat:'LOW',role:'Target',brief:'SÄPO tracks Russian influence ops. NATO membership elevates targeting. Ericsson telecom = espionage target.'},NO:{s:30,threat:'LOW',role:'Target',brief:'Storting parliament hacked (APT28, 2020). Oil/gas sector targeted. NATO member.'},PL:{s:38,threat:'MEDIUM',role:'Target',brief:'Front line of Russian cyber ops. CERT Polska very active. Infrastructure attacks surge since Ukraine war.'},FI:{s:32,threat:'LOW',role:'Target',brief:'Parliament breached (APT28). NATO accession elevated targeting. Excellent national cyber posture.'},BR:{s:28,threat:'LOW',role:'Regional',brief:'Largest LATAM economy = ransomware target. STJ Supreme Court hit. Lapsus$ gang originated here.'},ZA:{s:22,threat:'LOW',role:'Target',brief:'Transnet logistics ransomware. Credit bureau breach (35M records). African financial hub.'},NG:{s:24,threat:'LOW',role:'Mixed',brief:'BEC/419 fraud origin. SilverTerrier threat group. Growing ransomware export.'},EG:{s:26,threat:'LOW',role:'Mixed',brief:'APT-C-37 (Egyptian state-linked) targets dissidents. FinFisher deployed. Regional capability developing.'},TR:{s:35,threat:'MEDIUM',role:'Mixed',brief:'StrongPity/PROMETHIUM APT (Turkish-linked). NATO ally but Huawei 5G concerns. Aggressive posture.'},SA:{s:38,threat:'MEDIUM',role:'Target/Actor',brief:'Shamoon wiper destroyed 35K Aramco workstations (2012). Ongoing energy sector targeting. SSF developing offensive tools.'},AE:{s:34,threat:'MEDIUM',role:'Mixed',brief:'Karma operation targeting dissidents. DarkMatter espionage. Financial hub = cybercrime target.'},SY:{s:55,threat:'HIGH',role:'Conflict Zone',brief:'Syrian Electronic Army. Russian forces operate from Syrian cyberspace. Active warzone.'},IQ:{s:48,threat:'MEDIUM',role:'Conflict Zone',brief:'Iran-linked groups (OilRig, MuddyWater) operate here. Critical infrastructure poorly protected.'},YE:{s:52,threat:'HIGH',role:'Conflict Zone',brief:'Houthi-linked cyber ops against Saudi infrastructure. Iranian cyber support.'},AF:{s:55,threat:'HIGH',role:'Conflict Zone',brief:'Taliban seized US biometric databases (2021). Chinese rare earth interests driving espionage.'},LY:{s:45,threat:'MEDIUM',role:'Conflict Zone',brief:'Split government. Russian Wagner-linked influence ops. Oil infrastructure targeted.'},KZ:{s:30,threat:'LOW',role:'Target',brief:'Turla/Snake APT transits through KZ. Russian sphere of influence.'},GE:{s:40,threat:'MEDIUM',role:'Target',brief:'Russian cyber attack preceded 2008 invasion (first state cyber-war event). Ongoing FSB/GRU targeting.'},AZ:{s:36,threat:'MEDIUM',role:'Mixed',brief:'Fancy Bear targeted energy sector. Azerbaijan-Armenia conflict cyber ops.'},MY:{s:26,threat:'LOW',role:'Target',brief:'APT40 targets Malaysian government/maritime. MAS airline data breaches.'},TH:{s:24,threat:'LOW',role:'Target',brief:'Royal Thai government targeted by Chinese APTs. RedAlpha campaign.'},VN:{s:28,threat:'LOW',role:'Mixed',brief:'APT32/OceanLotus (Vietnamese state) conducts regional espionage. Targets ASEAN neighbours.'},PH:{s:30,threat:'LOW',role:'Target',brief:'Chinese APTs target South China Sea communications. DICT breach (2023, 55M records).'},ID:{s:25,threat:'LOW',role:'Target',brief:'BPJS breach (279M records). Chinese espionage in maritime domain.'},MX:{s:26,threat:'LOW',role:'Target',brief:'Sedena military breach (2022, 6TB). PEMEX ransomware. NSO Group Pegasus used.'},AR:{s:22,threat:'LOW',role:'Target',brief:'RENAPER breach (2021, 45M records). Senate ransomware. Financial sector BEC.'},CO:{s:22,threat:'LOW',role:'Target',brief:'DANE statistics breach. Ransomware hits government. CCIT developing capability.'},CL:{s:20,threat:'LOW',role:'Target',brief:'BancoEstado ransomware (2020). Growing fintech sector = increasing target value.'},PT:{s:24,threat:'LOW',role:'Target',brief:'NATO member. TAP airline breach. EDP energy ransomware (2020).'},GR:{s:26,threat:'LOW',role:'Target',brief:'Predator spyware used against journalists. Turkish APT targeting. NATO eastern flank.'},RO:{s:30,threat:'LOW',role:'Target',brief:'Romanian-origin cybercrime groups prolific (Guccifer). NATO member.'},SK:{s:28,threat:'LOW',role:'Target',brief:'APT28 targeting NATO members. CSIRT.sk coordinates. Russian proximity.'},HR:{s:24,threat:'LOW',role:'Target',brief:'NATO/EU member. ZSIS intelligence agency. Russian influence ops.'},RS:{s:32,threat:'MEDIUM',role:'Mixed',brief:'Russian influence operations hub. Balkan cybercrime ecosystem.'},EE:{s:36,threat:'MEDIUM',role:'Target',brief:'First state-level DDoS attack (2007, Russia). World-leading e-governance. Excellent cyber resilience.'},LV:{s:34,threat:'MEDIUM',role:'Target',brief:'Sandworm targeting Baltic infrastructure. CERT.LV world-class.'},LT:{s:34,threat:'MEDIUM',role:'Target',brief:'Vilnius hosts NATO CCDCOE. Constant Russian targeting. Strong cyber legislation.'},NZ:{s:20,threat:'LOW',role:'Target',brief:'Five Eyes member. GCSB coordinates. Chinese APT targeting research institutions.'},KE:{s:20,threat:'LOW',role:'Target',brief:'eCitizen DDoS (2023). CBK banking breach. Growing African fintech hub.'},MA:{s:22,threat:'LOW',role:'Target',brief:'Pegasus spyware deployed against journalists. Growing digital economy.'},AT:{s:26,threat:'LOW',role:'Target',brief:'OSCE HQ in Vienna = espionage hub. APT28 targeted Foreign Ministry (2019-2020).'},CH:{s:25,threat:'LOW',role:'Target',brief:'Neutrality hosts UN agencies = espionage ground. Ruag defence hack. NCSC world-class.'},BE:{s:28,threat:'LOW',role:'Target',brief:'NATO/EU HQ in Brussels = prime espionage target. Belgacom (GCHQ Regin).'},DK:{s:26,threat:'LOW',role:'Target',brief:'Mærsk destroyed by NotPetya ($300M). APT28 targeting. CFCS active.'},HU:{s:32,threat:'MEDIUM',role:'Mixed',brief:'Pegasus used against journalists. Russian alignment. Reduced NATO cyber sharing.'},CZ:{s:28,threat:'LOW',role:'Target',brief:'APT28 targeted Foreign Ministry. BIS intelligence active. NATO member.'},IT:{s:34,threat:'MEDIUM',role:'Target',brief:'LockBit ransomware hit government agencies. Lazarus targets financial sector. NATO member.'},ES:{s:30,threat:'LOW',role:'Target',brief:'APT28 targets political organizations. CNI coordinates. NATO member.'}};
+
+function computeScore(cc){
+  var base=(COUNTRY_PROFILES[cc]||{s:12}).s;
+  var war=(window.warCache||[]).filter(function(w){return w.src===cc||w.tgt===cc;}).length;
+  var rw=(window.rwCache||[]).filter(function(v){return VCC[v.country]===cc;}).length;
+  var kev=(window.kevCache||[]).filter(function(v){var VM={US:['Microsoft','Apple','Google','Cisco','Adobe','Oracle','VMware','Fortinet','Citrix','Ivanti'],DE:['SAP','Siemens'],RU:['Positive Technologies'],CN:['Huawei','Hikvision','ZTE'],KR:['Samsung'],JP:['Fujitsu'],IL:['Check Point']};return(VM[cc]||[]).some(function(vn){return v.vendorProject&&v.vendorProject.toLowerCase().indexOf(vn.toLowerCase())>=0;});}).length;
+  return Math.min(97,Math.max(8,base+Math.min(15,war*2+rw*2+kev)));
+}
+
+function renderMapPanel(isDesktop_){
+  var allCC=Object.keys(CN_).sort(function(a,b){return computeScore(b)-computeScore(a);});
+  var rows=allCC.map(function(cc){
+    var s=computeScore(cc),p=COUNTRY_PROFILES[cc]||{threat:'LOW',role:'Unknown',brief:'Limited intelligence available.'};
+    var c=s>=80?'#ff2d2d':s>=60?'#ff6a00':s>=40?'#ffc200':s>=25?'#00e676':'#4a6580';
+    var tc=p.threat==='CRITICAL'?'#ff2d2d':p.threat==='HIGH'?'#ff6a00':p.threat==='MEDIUM'?'#ffc200':'#00e676';
+    return'<div onclick="openModal(\''+cc+'\')" style="padding:8px 0;border-bottom:1px solid rgba(0,200,255,.04);cursor:pointer">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'+
+        '<span>'+(FL[cc]||'🌐')+' <strong style="font-size:11px;color:var(--tx)">'+CN_[cc]+'</strong>'+
+        ' <span style="font-size:7px;color:'+tc+';background:'+tc+'18;border:1px solid '+tc+'30;padding:1px 4px;border-radius:2px;margin-left:4px">'+p.threat+'</span></span>'+
+        '<span style="font-size:13px;font-weight:700;font-family:var(--mono);color:'+c+'">'+s+'</span>'+
+      '</div>'+
+      '<div style="height:2px;background:var(--mu2);border-radius:2px;margin-bottom:4px"><div style="width:'+s+'%;height:100%;background:'+c+';border-radius:2px"></div></div>'+
+      '<div style="font-size:7.5px;color:var(--mu2);font-family:var(--mono);margin-bottom:2px">'+p.role+'</div>'+
+      '<div style="font-size:7.5px;color:var(--mu);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+p.brief+'</div>'+
+    '</div>';
+  });
+  var header='<div style="font-size:7px;letter-spacing:2px;color:var(--mu);font-family:var(--mono);text-transform:uppercase;margin:0 0 6px">All Countries — Live Cyber Threat Index ('+allCC.length+')</div>';
+  [$('mapcii'),$('mapcii-d')].forEach(function(el){if(el)el.innerHTML=header+rows.join('');});
+}
+
+// ══════════════════════════════════════════════════════════
+// WAR ZONES — Active Conflicts & Cyber Surge Tracker
+// ══════════════════════════════════════════════════════════
+const WAR_ZONES=[
+  {id:'UA',flag:'🇺🇦',name:'Ukraine–Russia War',status:'ACTIVE',since:'Feb 2022',
+   attackers:['RU'],targets:['UA'],apt:['Sandworm','APT28','Gamaredon','Turla','CADET BLIZZARD'],
+   col:'#ff2d2d',surgeLevel:5,
+   ops:['Power grid wipers (Industroyer2)','Viasat satellite attack','Kyivstar telecom DDoS','Govt portals defaced','FoxBlade/HermeticWiper deployment','Continuous DDoS on critical infra'],
+   cyberNote:'Highest wartime cyber intensity ever recorded. Sandworm destroys power grids. Gamaredon maintains persistent access across 5000+ Ukrainian hosts. Wiper attacks precede kinetic strikes.'},
+  {id:'IL',flag:'🇮🇱',name:'Israel–Hamas / Iran Proxy War',status:'ACTIVE',since:'Oct 2023',
+   attackers:['IR','KP'],targets:['IL','US'],apt:['Charming Kitten','APT35','Moses Staff','Predatory Sparrow'],
+   col:'#ff6a00',surgeLevel:4,
+   ops:['IDF comms disruption attempts','Water system targeting (IRGC)','Hospital DDoS campaigns','Steel plant ICS attack (Predatory Sparrow)','Propaganda defacements','Telegram-based C2 ops'],
+   cyberNote:'IRGC Cyber Command coordinates with Hamas for disruptive ops. Predatory Sparrow (likely Israeli) destroyed Iranian steel plant ICS. Mutual critical infrastructure targeting.'},
+  {id:'TW',flag:'🇹🇼',name:'China–Taiwan Tensions',status:'ELEVATED',since:'Aug 2022',
+   attackers:['CN'],targets:['TW','US','JP'],apt:['Volt Typhoon','Salt Typhoon','APT40','APT41','Mustang Panda'],
+   col:'#ff6a00',surgeLevel:4,
+   ops:['Volt Typhoon pre-positioning in US infra','Salt Typhoon telecom espionage','Govt portal DDoS (Pelosi visit)','Taiwan military network intrusions','Live-fire exercise cyber component','5G infrastructure reconnaissance'],
+   cyberNote:'China pre-positioning inside US water, power and comms for potential Taiwan conflict. CISA/NSA: Volt Typhoon detected in critical infrastructure since 2021, waiting for activation signal.'},
+  {id:'IQ',flag:'🇾🇪',name:'Middle East Escalation',status:'ELEVATED',since:'Oct 2023',
+   attackers:['IR'],targets:['IL','SA','AE','US'],apt:['OilRig','MuddyWater','APT34','Tortoiseshell'],
+   col:'#ffc200',surgeLevel:3,
+   ops:['Houthi-linked comms intercepts','Saudi Aramco targeting resumes','UAE financial sector probing','US military contractor spearphishing','Red Sea shipping company breaches'],
+   cyberNote:'Regional escalation since Oct 2023 correlates with 340% increase in Middle East cyber incidents. Iran coordinates proxy group cyber ops with kinetic operations timing.'},
+  {id:'KP',flag:'🇰🇵',name:'DPRK Global Crypto Heists',status:'ACTIVE',since:'Ongoing',
+   attackers:['KP'],targets:['KR','JP','US','Global'],apt:['Lazarus Group','Kimsuky','Andariel','APT38','BlueNoroff'],
+   col:'#c026d3',surgeLevel:4,
+   ops:['$1.5B Bybit exchange hack (2025)','Ronin bridge $625M theft','Atomic Wallet $100M drain','Harmony Bridge $100M theft','Job offer phishing (Contagious Interview)','SWIFT banking system probing'],
+   cyberNote:'Lazarus Group stole $3B+ in crypto 2022-2025 funding ICBM program. UN Panel: 40% of DPRK WMD program financed by cybercrime. Most prolific state-sponsored financial threat.'},
+  {id:'BY',flag:'🇧🇾',name:'Russia–NATO Hybrid Warfare',status:'ACTIVE',since:'2022',
+   attackers:['RU','BY'],targets:['PL','DE','LT','LV','EE','FI','SE'],apt:['Fancy Bear','APT29','GRU Unit 74455','UNC1151'],
+   col:'#ffc200',surgeLevel:3,
+   ops:['Polish railway system intrusion','German SPD party breach','Baltic critical infra scanning','Ghostwriter influence operations','NATO logistics targeting','Undersea cable sabotage'],
+   cyberNote:'GRU escalating hybrid ops against NATO eastern flank. Germany expelled Russian spies after Bundestag hack. Poland reports 1000% increase in government cyber attacks since 2022.'},
+];
+
+// Targeted organisations database — sectors + known breaches
+const TARGET_ORGS=[
+  {sector:'🏥 Healthcare',col:'#ff2d2d',threat:'CRITICAL',
+   orgs:[
+     {n:'NHS UK',c:'🇬🇧',note:'WannaCry 2017 — 80+ hospitals offline. Ongoing Scattered Spider targeting.'},
+     {n:'US Hospital Sector',c:'🇺🇸',note:'CISA: Healthcare #1 ransomware target 2024. LockBit, BlackCat, Rhysida active.'},
+     {n:'Change Healthcare',c:'🇺🇸',note:'ALPHV/BlackCat — $22M ransom, 1/3 US healthcare payments disrupted Feb 2024.'},
+     {n:'Ascension Health',c:'🇺🇸',note:'Black Basta ransomware May 2024 — 140 hospitals disrupted.'},
+   ]},
+  {sector:'⚡ Energy/ICS',col:'#ff6a00',threat:'CRITICAL',
+   orgs:[
+     {n:'Ukraine Power Grid',c:'🇺🇦',note:'Sandworm: Industroyer (2016) + Industroyer2 (2022) destroyed substations.'},
+     {n:'Colonial Pipeline',c:'🇺🇸',note:'DarkSide ransomware 2021 — US East Coast fuel supply halted 6 days.'},
+     {n:'Saudi Aramco',c:'🇸🇦',note:'Shamoon wiper 2012 (35K workstations), Triton/TRISIS ICS attack 2017.'},
+     {n:'European Energy Sector',c:'🇪🇺',note:'400% spike in attacks since Ukraine war. Nord Stream sabotage + cyber.'},
+   ]},
+  {sector:'🏦 Financial',col:'#ffc200',threat:'HIGH',
+   orgs:[
+     {n:'SWIFT Banking Network',c:'🌐',note:'Lazarus: Bangladesh Bank $81M heist. 60+ banks targeted via SWIFT.'},
+     {n:'Crypto Exchanges',c:'🌐',note:'$3B+ stolen 2022-2025 by DPRK. Bybit $1.5B (2025), Ronin $625M (2022).'},
+     {n:'ICBC Bank China',c:'🇨🇳',note:'LockBit ransomware Nov 2023 — US Treasury bond trades disrupted.'},
+     {n:'ECB / EU Banks',c:'🇪🇺',note:'Scattered Spider targeting financial sector. Pro-Russia DDoS on 50+ banks.'},
+   ]},
+  {sector:'🛡 Defence/Gov',col:'#c026d3',threat:'CRITICAL',
+   orgs:[
+     {n:'SolarWinds / US Gov',c:'🇺🇸',note:'APT29/Cozy Bear — 18K orgs, 9 US agencies. Supply chain. 2020.'},
+     {n:'Microsoft Exchange',c:'🇺🇸',note:'Hafnium (China) — 250K servers globally. Zero-day chain. 2021.'},
+     {n:'Pentagon Contractors',c:'🇺🇸',note:'Volt Typhoon inside JBLM, NavalBase Guam comms — waiting for Taiwan trigger.'},
+     {n:'UK MoD / GCHQ Partners',c:'🇬🇧',note:'APT29 targeting cleared defence suppliers. Ongoing espionage 2024.'},
+   ]},
+  {sector:'📡 Telecom',col:'#00d4ff',threat:'HIGH',
+   orgs:[
+     {n:'AT&T / Verizon / T-Mobile',c:'🇺🇸',note:'Salt Typhoon (China) infiltrated carrier backbones — law enforcement wiretaps compromised 2024.'},
+     {n:'Kyivstar Ukraine',c:'🇺🇦',note:'Sandworm — 24M subscribers offline, largest telecom attack in history. Dec 2023.'},
+     {n:'Viasat Satellite',c:'🇺🇸',note:'GRU AcidRain wiper — satellite modems destroyed 1hr before Ukraine invasion Feb 2022.'},
+     {n:'Ericsson / Nokia',c:'🇸🇪',note:'APT40 targeting 5G supply chain. Equipment backdoor espionage.'},
+   ]},
+  {sector:'🚢 Transport/Logistics',col:'#00e676',threat:'HIGH',
+   orgs:[
+     {n:'Maersk Shipping',c:'🇩🇰',note:'NotPetya 2017 — $300M loss, global container ops halted 10 days.'},
+     {n:'Red Sea Shipping',c:'🌐',note:'Houthi cyber + kinetic. Shipping route disruption since Nov 2023.'},
+     {n:'German Rail (DB)',c:'🇩🇪',note:'GRU signal disruption attempts. Railway control systems probed.'},
+     {n:'Taiwan Strait Cables',c:'🌐',note:'PLA pre-cutting undersea cables as Taiwan conflict preparation.'},
+   ]},
+];
+
+var warHitsCache={}; // iso -> count from live feeds
+
+function renderWarZones(){
+  var wz=WAR_ZONES;
+  var h='<div style="padding:6px 8px;background:rgba(255,45,45,.05);border-bottom:1px solid rgba(255,45,45,.15);display:flex;justify-content:space-between;align-items:center">'+
+    '<span style="font-size:7px;color:var(--red);font-family:var(--mono);letter-spacing:1px">⚔ '+wz.length+' ACTIVE CONFLICT ZONES</span>'+
+    '<span style="font-size:6px;color:var(--mu);font-family:var(--mono)">Cyber-kinetic correlation</span></div>';
+  h+=wz.map(function(w){
+    var liveCnt=(warHitsCache[w.id]||0);
+    var bars='';for(var i=0;i<5;i++)bars+='<div style="width:8px;height:12px;border-radius:1px;background:'+(i<w.surgeLevel?w.col:'var(--mu2)')+'"></div>';
+    return'<div style="border-bottom:1px solid rgba(255,45,45,.08);padding:10px 10px 8px">'+
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:5px">'+
+        '<div>'+
+          '<span style="font-size:14px">'+w.flag+'</span>'+
+          '<span style="font-size:11px;font-weight:800;color:var(--tx);font-family:var(--hdr);letter-spacing:.5px;margin-left:5px">'+esc(w.name)+'</span>'+
+        '</div>'+
+        '<span style="font-size:6px;padding:2px 6px;border-radius:2px;font-family:var(--mono);color:'+w.col+';background:'+w.col+'18;border:1px solid '+w.col+'40;flex-shrink:0;margin-left:4px">'+w.status+'</span>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'+
+        '<div style="font-size:7px;color:var(--mu);font-family:var(--mono)">Since '+esc(w.since)+'</div>'+
+        '<div style="display:flex;align-items:center;gap:3px">'+
+          '<span style="font-size:6.5px;color:var(--mu);font-family:var(--mono);margin-right:2px">Cyber Surge</span>'+
+          bars+
+          (liveCnt?'<span style="font-size:7px;color:var(--red);font-family:var(--mono);margin-left:4px;background:rgba(255,45,45,.1);padding:1px 4px;border-radius:2px">+'+liveCnt+' live</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">'+
+        w.apt.map(function(a){return'<span style="font-size:6.5px;color:'+w.col+';background:'+w.col+'12;border:1px solid '+w.col+'30;padding:1px 5px;border-radius:10px;font-family:var(--mono)">'+esc(a)+'</span>';}).join('')+
+      '</div>'+
+      '<div style="margin-bottom:5px">'+
+        w.ops.slice(0,3).map(function(op){return'<div style="font-size:7.5px;color:var(--mu);padding:1px 0;font-family:var(--mono)">▸ '+esc(op)+'</div>';}).join('')+
+      '</div>'+
+      '<div style="font-size:7.5px;color:var(--mu);background:rgba(0,0,0,.25);padding:5px 7px;border-left:2px solid '+w.col+';line-height:1.5">'+esc(w.cyberNote)+'</div>'+
+    '</div>';
+  }).join('');
+  [$('war-zone-panel'),$('mob-wars-body')].forEach(function(el){if(el)el.innerHTML=h;});
+}
+
+function renderOrgTargets(){
+  var h='<div style="padding:6px 8px;background:rgba(255,45,45,.03);border-bottom:1px solid var(--bd);display:flex;justify-content:space-between">'+
+    '<span style="font-size:7px;color:var(--mu);font-family:var(--mono);letter-spacing:1px">🏛 MOST-TARGETED ORGANISATIONS</span></div>';
+  h+=TARGET_ORGS.map(function(sec){
+    var tc=sec.threat==='CRITICAL'?'var(--red)':'var(--org)';
+    return'<div style="border-bottom:1px solid rgba(0,200,255,.06)">'+
+      '<div style="padding:6px 10px 4px;display:flex;align-items:center;justify-content:space-between;background:'+sec.col+'0a">'+
+        '<span style="font-size:9px;font-weight:800;color:var(--tx);font-family:var(--hdr);letter-spacing:.5px">'+esc(sec.sector)+'</span>'+
+        '<span style="font-size:6.5px;color:'+tc+';background:'+tc.replace('var(','').replace(')','')+'18;border:1px solid;padding:1px 5px;border-radius:2px;font-family:var(--mono)">'+sec.threat+'</span>'+
+      '</div>'+
+      sec.orgs.map(function(o){
+        return'<div style="padding:5px 10px 5px 14px;border-bottom:1px solid rgba(0,200,255,.04)">'+
+          '<div style="font-size:9.5px;font-weight:700;color:var(--tx);margin-bottom:2px">'+o.c+' '+esc(o.n)+'</div>'+
+          '<div style="font-size:7.5px;color:var(--mu);line-height:1.5">'+esc(o.note)+'</div>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }).join('');
+  [$('org-target-panel'),$('mob-orgs-body')].forEach(function(el){if(el)el.innerHTML=h;});
+}
+
+// Cross-reference live RSS with war zones — update surge counts
+function updateWarHits(){
+  warHitsCache={};
+  window.warCache.forEach(function(w){
+    if(w.src)warHitsCache[w.src]=(warHitsCache[w.src]||0)+1;
+    if(w.tgt)warHitsCache[w.tgt]=(warHitsCache[w.tgt]||0)+1;
+  });
+  renderWarZones();
+}
+
+// ══════════════════════════════════════════════════════════
+// YOUTUBE CHANNELS — no broken thumbnails, styled cards
+// ══════════════════════════════════════════════════════════
+const YT_CHANNELS=[
+  {handle:'defconhackers',id:'UCJXGnMoVhJjWJy9TZ0VBKJQ',name:'DEF CON',desc:'World\'s largest hacker conference. Talks, CTF, red team.',cat:'Conference',col:'#ff6a00',icon:'🎯'},
+  {handle:'hak5darren',id:'UC0ZTPkdxlAKf-V33tqXwi3Q',name:'Hak5',desc:'Pentest tools, hacking culture, hardware hacks.',cat:'Education',col:'#00d4ff',icon:'🛠'},
+  {handle:'JohnHammond010',id:'UCNUYwA3vcCQtue2QCMoqobA',name:'John Hammond',desc:'CTF walkthroughs, malware analysis, reverse engineering.',cat:'Research',col:'#c026d3',icon:'🔬'},
+  {handle:'LiveOverflow',id:'UCkefXKtjZ5G5aBO9SQKzO1g',name:'LiveOverflow',desc:'Binary exploitation, bug bounty, security research.',cat:'Research',col:'#ff2d2d',icon:'💥'},
+  {handle:'BlackHillsInfoSec',id:'UClcE-kVhqyiR2nj5d2L3Nfg',name:'BHIS',desc:'Black Hills InfoSec: red team, threat hunting, SOC.',cat:'Training',col:'#ffc200',icon:'🏴'},
+  {handle:'securityweekly',id:'UCsukmKB6JuanNgN6LjIw-Bg',name:'Security Weekly',desc:'Weekly cybersecurity news, interviews, deep dives.',cat:'Podcast',col:'#1e90ff',icon:'📻'},
+  {handle:'13cubed',id:'UCVeW9qkBjo3zosnqUbG7CFw',name:'13Cubed',desc:'DFIR, memory forensics, incident response.',cat:'Forensics',col:'#c026d3',icon:'🔍'},
+  {handle:'SANSInstitute',id:'UC286ntgASMsFNMFkm4HEF6g',name:'SANS Institute',desc:'Official SANS: training, webcasts, threat intel.',cat:'Training',col:'#ff6a00',icon:'🎓'},
+  {handle:'MalwareTechBlog',id:'UCLDnEn-TxeItZgq4m3p3zDQ',name:'Marcus Hutchins',desc:'WannaCry hero. Malware analysis, exploit dev.',cat:'Research',col:'#00e676',icon:'🦠'},
+];
+
+const OSINT_ACCOUNTS=[
+  {handle:'@vxunderground',name:'vx-underground',desc:'Malware samples, APT TTPs, threat intel.',url:'https://x.com/vxunderground',col:'#ff2d2d'},
+  {handle:'@malwrhunterteam',name:'MalwareHunterTeam',desc:'Active malware hunting & IOC sharing.',url:'https://x.com/malwrhunterteam',col:'#ff6a00'},
+  {handle:'@USCERT_gov',name:'CISA/US-CERT',desc:'Official US government cyber alerts.',url:'https://x.com/USCERT_gov',col:'#00e676'},
+  {handle:'@bad_packets',name:'Bad Packets',desc:'Mass scan detection, threat intel.',url:'https://x.com/bad_packets',col:'#ffc200'},
+  {handle:'@cyb3rops',name:'Florian Roth',desc:'YARA/Sigma rules, APT detection.',url:'https://x.com/cyb3rops',col:'#1e90ff'},
+  {handle:'@GossiTheDog',name:'Kevin Beaumont',desc:'Vuln disclosure, threat intel, SOC.',url:'https://x.com/GossiTheDog',col:'#ff2d2d'},
+  {handle:'@BleepinComputer',name:'BleepingComputer',desc:'Ransomware tracking, breaking news.',url:'https://x.com/BleepinComputer',col:'#00d4ff'},
+  {handle:'@campuscodi',name:'Catalin Cimpanu',desc:'Security journalist, breaking vuln news.',url:'https://x.com/campuscodi',col:'#c026d3'},
+  {handle:'@RidT',name:'Thomas Rid',desc:'Cyber conflict, influence ops, policy.',url:'https://x.com/RidT',col:'#00e676'},
+  {handle:'@threatpost',name:'Threatpost',desc:'Breaking cybersecurity news & analysis.',url:'https://x.com/threatpost',col:'#00d4ff'},
+  {handle:'@ShadowChasing1',name:'ShadowChasing',desc:'Chinese APT tracking, threat hunting.',url:'https://x.com/ShadowChasing1',col:'#ff6a00'},
+  {handle:'@KimZetter',name:'Kim Zetter',desc:'Stuxnet author. Nation-state cyber journalism.',url:'https://x.com/KimZetter',col:'#amb'},
+];
+
+function renderYTCards(targetId){
+  var el=$(targetId);if(!el)return;
+  el.innerHTML='<div style="padding:5px 8px 3px;font-size:6.5px;color:var(--mu2);font-family:var(--mono);border-bottom:1px solid var(--bd)">Tap card to open channel on YouTube</div>'+
+  YT_CHANNELS.map(function(ch){
+    var ytUrl='https://www.youtube.com/c/'+ch.handle;
+    var grad='linear-gradient(135deg,'+ch.col+'22 0%,rgba(5,8,13,0) 60%)';
+    return'<div onclick="window.open(\'https://youtube.com/@'+ch.handle+'\')" style="margin:6px 8px;border:1px solid '+ch.col+'30;border-radius:4px;overflow:hidden;background:'+ch.col+'0d;cursor:pointer;transition:background .1s" onmouseover="this.style.background=\''+ch.col+'18\'" onmouseout="this.style.background=\''+ch.col+'0d\'">'+
+      '<div style="padding:8px 10px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'+
+          '<div style="display:flex;align-items:center;gap:6px">'+
+            '<span style="font-size:18px;line-height:1">'+ch.icon+'</span>'+
+            '<div>'+
+              '<div style="font-size:11px;font-weight:800;color:var(--tx);font-family:var(--hdr);letter-spacing:.5px">'+esc(ch.name)+'</div>'+
+              '<div style="font-size:6.5px;color:var(--mu);font-family:var(--mono)">@'+esc(ch.handle)+'</div>'+
+            '</div>'+
+          '</div>'+
+          '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">'+
+            '<span style="font-size:6px;color:'+ch.col+';background:'+ch.col+'20;border:1px solid '+ch.col+'40;padding:1px 5px;border-radius:2px;font-family:var(--mono)">'+esc(ch.cat)+'</span>'+
+            '<span style="font-size:9px;color:#ff4444;font-family:var(--mono)">▶ YT</span>'+
+          '</div>'+
+        '</div>'+
+        '<div style="font-size:8px;color:var(--mu);line-height:1.45">'+esc(ch.desc)+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function renderOSINTCards(targetId){
+  var el=$(targetId);if(!el)return;
+  el.innerHTML='<div style="padding:5px 8px 3px;font-size:6.5px;color:var(--mu2);font-family:var(--mono);border-bottom:1px solid var(--bd)">Top threat intel & OSINT accounts — tap to open</div>'+
+  OSINT_ACCOUNTS.map(function(a){
+    return'<div onclick="window.open(\''+a.url+'\')" style="padding:7px 10px;border-bottom:1px solid rgba(0,200,255,.05);cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'var(--p1)\'" onmouseout="this.style.background=\'\'">'+
+      '<div style="display:flex;align-items:center;gap:5px;margin-bottom:2px">'+
+        '<span style="font-size:10px;font-weight:900;color:'+a.col+'">𝕏</span>'+
+        '<strong style="font-size:10px;color:var(--tx)">'+esc(a.name)+'</strong>'+
+        '<span style="font-size:7px;color:var(--mu);font-family:var(--mono)">'+esc(a.handle)+'</span>'+
+      '</div>'+
+      '<div style="font-size:7.5px;color:var(--mu);line-height:1.4">'+esc(a.desc)+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+// Init streams in both desktop and mobile
+setTimeout(function(){
+  renderWarZones();
+  renderOrgTargets();
+  renderYTCards('yt-cards');
+  renderYTCards('mob-yt-body');
+  renderOSINTCards('twitter-cards');
+  renderOSINTCards('mob-osint-body');
+},100);
+
+// ══════════════════════════════════════════════════════════
+// RSS & THREAT CLASSIFICATION
+// ══════════════════════════════════════════════════════════
+const RSS_FEEDS=[
+  {n:'The Hacker News',u:'https://feeds.feedburner.com/TheHackersNews'},
+  {n:'BleepingComputer',u:'https://www.bleepingcomputer.com/feed/'},
+  {n:'Krebs on Security',u:'https://krebsonsecurity.com/feed/'},
+  {n:'CISA Advisories',u:'https://www.cisa.gov/cybersecurity-advisories/all.xml'},
+  {n:'SANS ISC',u:'https://isc.sans.edu/rssfeed_full.xml'},
+  {n:'Schneier on Security',u:'https://www.schneier.com/feed/atom/'},
+];
+const ACTORS=[{k:['russia','russian','gru','fsb','apt28','apt29','sandworm','fancy bear','turla','gamaredon','midnight blizzard','cozy bear'],iso:'RU',col:'#ff2d2d'},{k:['china','chinese','prc','mss','apt31','apt40','apt41','volt typhoon','salt typhoon','hafnium','mustang panda'],iso:'CN',col:'#ff6a00'},{k:['iran','iranian','irgc','apt33','apt34','apt35','oilrig','muddywater','charming kitten'],iso:'IR',col:'#ffc200'},{k:['north korea','dprk','lazarus','kimsuky','andariel','apt38'],iso:'KP',col:'#c026d3'},{k:['israel','unit 8200'],iso:'IL',col:'#1e90ff'}];
+const TGTS=[{k:['ukraine'],iso:'UA'},{k:['taiwan'],iso:'TW'},{k:['united states','pentagon'],iso:'US'},{k:['germany'],iso:'DE'},{k:['south korea'],iso:'KR'},{k:['japan'],iso:'JP'},{k:['britain','british'],iso:'GB'},{k:['france'],iso:'FR'},{k:['australia'],iso:'AU'},{k:['india'],iso:'IN'},{k:['philippines'],iso:'PH'}];
+const ATYPES=[{k:['wiper','destructive'],l:'Destructive Wiper',m:'war'},{k:['ransomware','ransom'],l:'Ransomware',m:'beg'},{k:['espionage','exfiltrat'],l:'Espionage',m:'war'},{k:['phishing','spear-phishing'],l:'Phishing',m:'beg'},{k:['supply chain'],l:'Supply Chain Attack',m:'pro'},{k:['zero-day','0-day'],l:'Zero-Day Exploit',m:'pro'},{k:['ics','scada','critical infrastructure','power grid'],l:'Critical Infrastructure',m:'war'},{k:['credential','data breach'],l:'Credential Theft',m:'beg'},{k:['ddos'],l:'DDoS',m:'beg'},{k:['botnet'],l:'Botnet',m:'pro'}];
+const REL=['apt ','nation-state','state-sponsored','sandworm','lazarus','volt typhoon','salt typhoon','fancy bear','oilrig','kimsuky','turla','gamaredon','midnight blizzard','charming kitten','muddywater','espionage','wiper','zero-day exploit','supply chain','ransomware group','threat actor','cyber attack','data breach','malware','gru ','fsb ','irgc ','dprk','north korea hack','apt28','apt29','apt40','apt41','lockbit','blackcat','alphv','clop','conti'];
+
+function classify(text){
+  var t=text.toLowerCase(),src=null,tgt=null,col='#ff2d2d',atype='Nation-State Activity',am='war';
+  for(var i=0;i<ACTORS.length;i++)if(ACTORS[i].k.some(function(k){return t.indexOf(k)>=0;})){src=ACTORS[i].iso;col=ACTORS[i].col;break;}
+  for(var j=0;j<TGTS.length;j++)if(TGTS[j].k.some(function(k){return t.indexOf(k)>=0;})&&TGTS[j].iso!==src){tgt=TGTS[j].iso;break;}
+  for(var k=0;k<ATYPES.length;k++)if(ATYPES[k].k.some(function(kw){return t.indexOf(kw)>=0;})){atype=ATYPES[k].l;am=ATYPES[k].m;break;}
+  if(!src&&/(ransom|lockbit|blackcat|clop|conti)/i.test(text))col='#c026d3';
+  return{src:src,tgt:tgt,col:col,atype:atype,am:am};
+}
+
+function parseRSSXML(text,feedName){
+  var items=[];
+  try{var doc=new DOMParser().parseFromString(text,'text/xml');
+    doc.querySelectorAll('item,entry').forEach(function(el){
+      var title=(el.querySelector('title')||{}).textContent||'';
+      var link=(el.querySelector('link')||{}).textContent||(el.querySelector('link')||{}).getAttribute('href')||'';
+      var pub=(el.querySelector('pubDate,published,updated')||{}).textContent||'';
+      var desc=(el.querySelector('description,summary,content')||{}).textContent||'';
+      if(title)items.push({feed:feedName,title:title.trim(),link:link.trim(),pub:pub.trim(),desc:desc.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,280)});
+    });
+  }catch(e){}
+  return items;
+}
+
+async function loadRSS(){
+  var all=[],ok=0;
+  await Promise.allSettled(RSS_FEEDS.map(async function(feed){
+    try{
+      var r1=await xhrGet(RSS2JSON(feed.u),18000);
+      if(r1.ok){var j=await r1.json();if(j.status==='ok'&&j.items&&j.items.length){ok++;j.items.slice(0,15).forEach(function(i){all.push({feed:feed.n,title:(i.title||'').trim().replace(/&amp;/g,'&').replace(/&#039;/g,"'"),link:i.link||i.guid||'',pub:i.pubDate||'',desc:(i.description||i.content||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().slice(0,280)});});return;}}
+    }catch(e){}
+    for(var i=0;i<PROXIES.length;i++){
+      try{var r2=await xhrGet(PROXIES[i](feed.u),18000);if(!r2.ok)continue;var xml=await r2.text();if(!xml||xml.length<100)continue;var parsed=parseRSSXML(xml,feed.n);if(parsed.length){ok++;all.push.apply(all,parsed.slice(0,15));return;}}catch(e){}
+    }
+    console.warn(feed.n,'all methods failed');
   }));
-  for (const r of results) if(r.status==='fulfilled') all.push(...r.value);
-  all.sort((a,b)=>new Date(b.pubDate||0)-new Date(a.pubDate||0));
-
-  $('news-ld').style.display='none';
-  $('h-status').textContent = 'LIVE'; // News usually last to load
-
-  $('news-list').innerHTML = all.map(item=>{
-    const href = item.link ? `window.open(${JSON.stringify(item.link)},'_blank')` : '';
-    return `<div class="newscard" onclick="${href}">`+
-      `<div class="newssrc" style="color:${item.col}">${esc(item.source)}</div>`+
-      `<div class="newstitle">${esc(item.title)}</div>`+
-      (item.snippet?`<div class="newssnip">${esc(item.snippet)}</div>`:'')+
-      `<div class="newsdate">${item.pubDate?new Date(item.pubDate).toUTCString().slice(0,22):''}</div>`+
-      `</div>`;
-  }).join('');
-
-  // Ticker from real headlines + warzone context
-  const warTitles = WARDATA.slice(0,4).map(w =>
-    `<span class="ti"><span class="tdt" style="background:${w.col}"></span>WARZONE: ${esc(w.actors)} — ${esc(w.title.slice(0,60))}</span>`
-  );
-  const newsTitles = all.slice(0,8).map(it=>
-    `<span class="ti"><span class="tdt" style="background:${it.col}"></span>${esc(it.source)}: ${esc(it.title.slice(0,70))}</span>`
-  );
-  const all2 = [...warTitles,...newsTitles];
-  $('tkr-inner').innerHTML = [...all2,...all2].join('');
-
-  return all.length;
-}
-
-// ── INIT ──────────────────────────────────────────────────
-async function init() {
-  // 1. Render warzone intelligence immediately (no fetch needed — curated data)
-  renderWarzone();
-
-  // 2. Fire all live data fetches simultaneously
-  const [f,u,n,c,r] = await Promise.allSettled([
-    loadFeodo(),
-    loadURLhaus(),
-    loadNVD(),
-    loadCISA(),
-    loadRSS(),
-  ]);
-
-  const ok = [f,u,n,c,r].filter(x=>x.status==='fulfilled').length;
-  if (!$('h-status').textContent || $('h-status').textContent === 'LOADING') {
-    $('h-status').textContent = ok >= 2 ? 'LIVE' : ok > 0 ? 'PARTIAL' : 'OFFLINE';
+  var seen=new Set();
+  var rel=all.filter(function(i){var f=(i.title+' '+i.desc).toLowerCase();return REL.some(function(k){return f.indexOf(k)>=0;});}).filter(function(i){var k=i.title.toLowerCase().slice(0,55);if(seen.has(k))return false;seen.add(k);return true;}).sort(function(a,b){return new Date(b.pub||0)-new Date(a.pub||0);}).slice(0,60);
+  window.warCache=rel.map(function(i){var r=classify(i.title+' '+i.desc);return Object.assign({},i,r);});
+  $('s-apt').textContent=window.warCache.length;
+  setSrc('rss',ok>0,'RSS '+ok+'/'+RSS_FEEDS.length+(ok?' ✓':''));
+  [$('ildr'),$('ildr-d')].forEach(function(el){if(el)el.style.display='none';});
+  if(window.warCache.length){
+    var items=window.warCache.slice(0,8).map(function(w){return'<span style="padding-right:55px">'+(w.src?'<span style="color:'+w.col+'">'+esc(CN_[w.src]||w.src)+'</span> → ':'')+'<span style="color:var(--tx)">'+esc(w.title.slice(0,60))+'</span> <span style="opacity:.35;font-size:7px">['+esc(w.feed)+']</span></span>';});
+    [$('tscrl'),$('mob-tscrl')].forEach(function(el){if(el)el.innerHTML=items.concat(items).join('');});
   }
-
-  // Periodic refresh
-  setInterval(loadURLhaus, 120_000);
-  setInterval(loadFeodo,   300_000);
-  setInterval(loadRSS,     180_000);
-  setInterval(loadCISA,  3_600_000);
+  renderIntel();
+  updateWarHits();
+  var srcI=window.warCache.filter(function(w){return w.src;});
+  srcI.slice(0,18).forEach(function(w,i){
+    var tgt=w.tgt||['US','DE','UA','GB'][i%4];
+    var ts=w.pub?new Date(w.pub).getTime():Date.now()-i*55000;
+    addEvt(w.src,'apt','critical',w.title.slice(0,50),ts);
+    if(w.tgt)addEvt(w.tgt,'apt','high',w.title.slice(0,50),ts);
+    setTimeout(function(){
+      addFeed('apt',w.src,tgt,w.col,w.atype,w.title,(w.desc||'').slice(0,85),[[w.atype,w.col],[w.feed,'#2a4466']],w.link,w.am);
+      launchArc(w.src,tgt,w.col);ping(w.src,w.col,0,false);ping(w.src,w.col,0,true);
+      if(w.tgt){ping(w.tgt,w.col,700,false);ping(w.tgt,w.col,700,true);}
+    },i*420);
+  });
+  if(srcI.length)setInterval(function(){var w=srcI[Math.floor(Math.random()*srcI.length)];launchArc(w.src,w.tgt||'US',w.col);ping(w.src,w.col,0,false);ping(w.src,w.col,0,true);},4000);
 }
 
-init();
+async function loadNVD(){
+  try{
+    var end=new Date().toISOString().split('.')[0],start=new Date(Date.now()-7*86400000).toISOString().split('.')[0];
+    var j=await fetchJ('https://services.nvd.nist.gov/rest/json/cves/2.0?pubStartDate='+start+'&pubEndDate='+end+'&resultsPerPage=50');
+    nvdData=(j.vulnerabilities||[]).map(function(v){var c=v.cve,m=((c.metrics&&(c.metrics.cvssMetricV31||c.metrics.cvssMetricV30||c.metrics.cvssMetricV2))||[])[0];return{id:c.id,desc:((c.descriptions||[]).find(function(d){return d.lang==='en';})||{}).value||'',sev:(m&&m.cvssData&&m.cvssData.baseSeverity)||'N/A',score:(m&&m.cvssData&&m.cvssData.baseScore)||0,pub:(c.published||'').split('T')[0]};}).sort(function(a,b){return b.score-a.score;});
+    $('s-cve').textContent=(j.totalResults||nvdData.length).toLocaleString();
+    setSrc('nvd',true,'NVD '+(j.totalResults||nvdData.length)+' ✓');
+    [$('vldr'),$('vldr-d')].forEach(function(el){if(el)el.style.display='none';});
+    renderVuln();
+    nvdData.filter(function(c){return c.sev==='CRITICAL';}).slice(0,10).forEach(function(c,i){
+      addEvt('US','cve','critical',c.id,Date.now()-i*200000);
+      setTimeout(function(){addFeed('cve','US','Global','#ffc200','Critical CVE',c.id,c.desc.slice(0,80),[['CRITICAL','#ff2d2d'],['NVD','#2a4466']],'https://nvd.nist.gov/vuln/detail/'+c.id,'pro');},18000+i*1400);
+    });
+  }catch(e){setSrc('nvd',false,'NVD failed');console.error('NVD:',e);}
+}
+
+async function loadCISA(){
+  try{
+    var j=await fetchJ('https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json');
+    window.kevCache=(j.vulnerabilities||[]).sort(function(a,b){return new Date(b.dateAdded)-new Date(a.dateAdded);});
+    $('s-kev').textContent=window.kevCache.length.toLocaleString();
+    setSrc('cisa',true,'KEV '+window.kevCache.length+' ✓');
+    if(vView==='kev')renderVuln();
+    window.kevCache.slice(0,12).forEach(function(v,i){
+      addEvt('US','kev','high',v.cveID,new Date(v.dateAdded).getTime()||Date.now()-i*3600000);
+      setTimeout(function(){addFeed('kev','US','Global','#c026d3','CISA KEV',v.cveID+' — '+v.vendorProject,(v.shortDescription||'').slice(0,75),[['EXPLOITED','#ff2d2d'],['CISA','#2a4466']],'https://nvd.nist.gov/vuln/detail/'+v.cveID,'beg');},25000+i*900);
+    });
+  }catch(e){setSrc('cisa',false,'CISA failed');console.error('CISA:',e);}
+}
+
+async function loadRW(){
+  try{
+    var j=await fetchJ('https://api.ransomware.live/recentvictims');
+    if(!Array.isArray(j)||!j.length)throw new Error('empty');
+    window.rwCache=j;$('s-dw').textContent=j.length;setSrc('dw',true,'RW '+j.length+' ✓');
+    if(vView==='dw')renderVuln();
+    window.rwCache.slice(0,22).forEach(function(v,i){
+      var cc=VCC[v.country]||null;
+      if(cc)addEvt(cc,'dw','critical',v.victim_name||'DW',v.discovered?new Date(v.discovered).getTime():Date.now()-i*80000);
+      setTimeout(function(){
+        addFeed('dw',null,cc||'US','#cc0000','Dark Web Leak','☠ '+(v.group_name||'?')+' → '+(v.victim_name||'Undisclosed'),(v.country||'')+' · '+(v.activity||''),[['☠ '+(v.group_name||'?'),'#cc0000'],['ransomware.live','#2a4466']],'https://www.ransomware.live','beg');
+        if(cc){launchArc('US',cc,'#cc0000');ping(cc,'#cc0000',0,false);ping(cc,'#cc0000',0,true);}
+      },14000+i*600);
+    });
+  }catch(e){setSrc('dw',false,'RW.live ✗');console.error('RW.live:',e);}
+}
+
+async function loadAbuse(){
+  var key=($('akey')&&$('akey').value||'').trim();if(!key)return;
+  [$('vbody'),$('vbody-d')].forEach(function(el){if(el)el.innerHTML='<div class="ld"><div class="sp"></div>Authenticating…</div>';});
+  try{
+    var r=await xhrGetH('https://feodotracker.abuse.ch/downloads/ipblocklist.json',{'Auth-Key':key},14000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    var j=await r.json();window.feodoCache=j.results||[];renderVuln();
+  }catch(e){[$('vbody'),$('vbody-d')].forEach(function(el){if(el)el.innerHTML='<div class="ebox">Auth failed. Free key at <a href="https://auth.abuse.ch" target="_blank">auth.abuse.ch</a></div>';});}
+}
+
+// ══════════════════════════════════════════════════════════
+// COUNTRY MODAL
+// ══════════════════════════════════════════════════════════
+function closeModal(){$('cmod').classList.remove('open');d3.selectAll('.land,.land-m').classed('sel',false).attr('fill','#080e16');}
+async function openModal(cc){
+  $('cmod').classList.add('open');
+  $('cmf').textContent=FL[cc]||'🌐';$('cmn').textContent=CN_[cc]||cc||'?';$('cms').textContent=(cc||'??')+' · Cyber Intel';
+  $('cmbd').innerHTML='<div class="ld"><div class="sp"></div>Fetching intel…</div>';
+  if(!cc){$('cmbd').innerHTML='<div class="ibox">Country not in database.</div>';return;}
+  var results=await Promise.allSettled([
+    fetchJ('https://restcountries.com/v3.1/alpha/'+cc+'?fields=name,capital,population,region,tld'),
+    fetchJ('https://api.bgpview.io/country/'+cc)
+  ]);
+  var meta=results[0].status==='fulfilled'?results[0].value:null;
+  var bgp=results[1].status==='fulfilled'?results[1].value:null;
+  var p4=(bgp&&bgp.data&&bgp.data.ipv4_prefixes||[]).length;
+  var war=(window.warCache||[]).filter(function(w){return w.src===cc||w.tgt===cc;}).slice(0,6);
+  var rw=(window.rwCache||[]).filter(function(v){return VCC[v.country]===cc;}).slice(0,4);
+  var VMAP={RU:['Positive Technologies'],CN:['Huawei','Hikvision','ZTE'],US:['Microsoft','Apple','Google','Cisco','Adobe','Oracle','VMware','Fortinet','Citrix','Ivanti'],DE:['SAP','Siemens'],KR:['Samsung'],JP:['Fujitsu'],IL:['Check Point']};
+  var kev=(window.kevCache||[]).filter(function(v){return(VMAP[cc]||[]).some(function(vn){return v.vendorProject&&v.vendorProject.toLowerCase().indexOf(vn.toLowerCase())>=0;});}).slice(0,4);
+  var evs=window.allEvents.filter(function(e){return e.iso===cc;});
+  var HSRC=['RU','CN','IR','KP','BY'],HTGT=['US','UA','DE','GB','JP','KR','TW','IL','AU','CA','FR'];
+  var score=22;if(HSRC.indexOf(cc)>=0)score+=30;if(HTGT.indexOf(cc)>=0)score+=20;if(['UA','IL','IQ','SY'].indexOf(cc)>=0)score+=14;if(p4)score+=Math.min(12,Math.floor(p4/80));score+=Math.min(12,kev.length*3);score+=Math.min(18,war.length*4);score+=Math.min(12,rw.length*4);score=Math.min(97,Math.max(8,score));
+  var c=score>=80?'#ff2d2d':score>=60?'#ff6a00':score>=40?'#ffc200':score>=25?'#00e676':'#4a6580';
+  var srcR=HSRC.indexOf(cc)>=0?Math.min(95,score+10):Math.max(5,score-22);
+  var tgtR=HTGT.indexOf(cc)>=0?Math.min(95,score+6):Math.max(5,score-16);
+  var aptR=Math.min(95,war.length*15+kev.length*7+rw.length*5+4);
+  var sigs=[war.length&&{l:war.length+' APT',c:'#ff2d2d'},kev.length&&{l:kev.length+' KEV',c:'#ff6a00'},rw.length&&{l:rw.length+' DW',c:'#cc0000'},['UA','IL','IQ','SY'].indexOf(cc)>=0&&{l:'Conflict Zone',c:'#ff2d2d'},HSRC.indexOf(cc)>=0&&{l:'Threat Actor',c:'#ffc200'},!war.length&&!rw.length&&!kev.length&&{l:'No Active Alerts',c:'#00e676'}].filter(Boolean);
+  var cp=COUNTRY_PROFILES[cc]||null;
+  var threatStr=cp?cp.threat:(score>=80?'CRITICAL':score>=60?'HIGH':score>=40?'MEDIUM':'LOW');
+  var tc2=threatStr==='CRITICAL'?'#ff2d2d':threatStr==='HIGH'?'#ff6a00':threatStr==='MEDIUM'?'#ffc200':'#00e676';
+  var h='<div class="cms"><div class="cmst">Cyber Exposure Index</div><div class="sbig" style="color:'+c+'">'+score+'<span style="font-size:16px;color:var(--mu)">/100</span></div><div class="sv" style="color:'+c+'">'+(score>=80?'Critical':score>=60?'High':score>=40?'Elevated':'Moderate')+' — '+(score>=60?'Active operations':score>=40?'Monitored':'Minimal signals')+'</div><div class="sbarw"><div class="sbar"><span class="sbl">⚡ Origin</span><div class="sbt"><div class="sbf" style="width:'+srcR+'%;background:'+c+'"></div></div><span class="sbv" style="color:'+c+'">'+srcR+'</span></div><div class="sbar"><span class="sbl">🎯 Target</span><div class="sbt"><div class="sbf" style="width:'+tgtR+'%;background:#ff6a00"></div></div><span class="sbv" style="color:#ff6a00">'+tgtR+'</span></div><div class="sbar"><span class="sbl">🕵 APT+DW</span><div class="sbt"><div class="sbf" style="width:'+aptR+'%;background:#c026d3"></div></div><span class="sbv" style="color:#c026d3">'+aptR+'</span></div></div></div>';
+  h+='<div class="cms"><div class="cmst">Active Signals</div><div class="pills">'+sigs.map(function(s){return'<span class="pill" style="color:'+s.c+';background:'+s.c+'15;border-color:'+s.c+'40">'+esc(s.l)+'</span>';}).join('')+'</div></div>';
+  h+='<div class="sevg"><div class="sevc"><div class="sevn" style="color:var(--red)">'+evs.filter(function(e){return e.sev==='critical';}).length+'</div><div class="sevl">Crit</div></div><div class="sevc"><div class="sevn" style="color:var(--org)">'+evs.filter(function(e){return e.sev==='high';}).length+'</div><div class="sevl">High</div></div><div class="sevc"><div class="sevn" style="color:#cc0000">'+rw.length+'</div><div class="sevl">DW</div></div><div class="sevc"><div class="sevn" style="color:var(--pur)">'+kev.length+'</div><div class="sevl">KEV</div></div></div>';
+  if(war.length){h+='<div class="cms"><div class="cmst">APT Intel · '+war.length+'</div>';war.forEach(function(w){var hr=w.link?'onclick="window.open('+JSON.stringify(w.link)+')"':'';h+='<div class="nc" '+hr+'><div class="nb"><span class="nbdg" style="color:'+w.col+';background:'+w.col+'15;border:1px solid '+w.col+'30">'+esc(w.atype)+'</span><span class="nbdg" style="color:var(--mu);background:var(--mu2);border:1px solid var(--bd)">'+(w.src===cc?'Source':'Target')+'</span></div><div class="nct">'+esc(w.title)+'</div><div class="ncs">'+esc(w.feed)+'</div></div>';});h+='</div>';}
+  if(rw.length){h+='<div class="cms"><div class="cmst">☠ Dark Web Leaks · '+rw.length+'</div>';rw.forEach(function(v){h+='<div class="nc" onclick="window.open(\'https://www.ransomware.live\')"><div class="nb"><span class="nbdg" style="color:#cc0000;background:rgba(139,0,0,.15);border:1px solid rgba(204,0,0,.3)">☠ '+esc(v.group_name||'?')+'</span></div><div class="nct">'+esc(v.victim_name||'Undisclosed')+'</div><div class="ncs">'+esc(v.activity||'?')+' · ransomware.live</div></div>';});h+='</div>';}
+  if(kev.length){h+='<div class="cms"><div class="cmst">CISA KEV · '+kev.length+'</div>';kev.forEach(function(v){h+='<div class="nc" onclick="window.open(\'https://nvd.nist.gov/vuln/detail/'+v.cveID+'\')"><div class="nb"><span class="nbdg" style="color:var(--red);background:rgba(255,45,45,.1);border:1px solid rgba(255,45,45,.25)">'+esc(v.cveID)+'</span><span class="nbdg" style="color:var(--mu);background:var(--mu2);border:1px solid var(--bd)">'+esc(v.vendorProject)+'</span></div><div class="nct">'+esc(v.product)+'</div><div class="ncs">Due '+esc(v.dueDate)+'</div></div>';});h+='</div>';}
+  if(meta){h+='<div class="cms"><div class="cmst">Country Profile</div><div class="kv"><span class="kvk">Capital</span><span class="kvv">'+esc((meta.capital||[])[0]||'N/A')+'</span></div><div class="kv"><span class="kvk">Population</span><span class="kvv">'+esc((meta.population||0).toLocaleString())+'</span></div><div class="kv"><span class="kvk">Region</span><span class="kvv">'+esc(meta.region||'N/A')+'</span></div>'+(p4?'<div class="kv"><span class="kvk">IPv4 Prefixes</span><span class="kvv" style="color:var(--cyn)">'+p4.toLocaleString()+'</span></div>':'')+'</div>';}
+  var briefText=cp?cp.brief:('Score '+score+'/100. '+(war.length?war.length+' APT items. ':'')+(rw.length?rw.length+' DW leaks. ':'')+(kev.length?kev.length+' KEV vulns. ':'')+'Sources: NVD · CISA · RSS · ransomware.live.');
+  h+='<div class="cms"><div class="cmst">Intelligence Brief</div><div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap"><span style="font-size:8px;color:'+tc2+';background:'+tc2+'18;border:1px solid '+tc2+'30;padding:2px 8px;border-radius:3px;font-family:var(--mono)">'+threatStr+'</span>'+(cp?'<span style="font-size:8px;color:var(--mu);background:var(--mu2);border:1px solid var(--bd);padding:2px 8px;border-radius:3px;font-family:var(--mono)">'+esc(cp.role)+'</span>':'')+'<span style="font-size:8px;color:var(--acc);background:rgba(0,200,255,.06);border:1px solid rgba(0,200,255,.15);padding:2px 8px;border-radius:3px;font-family:var(--mono)">Score '+score+'/100</span></div><div class="brief">'+esc(briefText)+'</div><div style="font-size:7px;color:var(--mu2);font-family:var(--mono);margin-top:6px;line-height:1.7">Sources: NVD NIST · CISA KEV · RSS×6 · ransomware.live · BGPView · restcountries.com<br>'+(p4?'IPv4 prefixes: '+p4.toLocaleString()+' · ':'')+new Date().toUTCString().slice(0,25)+'</div></div>';
+  $('cmbd').innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════════════
+// NETWORK DIAGNOSTICS
+// ══════════════════════════════════════════════════════════
+async function runDiag(){
+  var bodies=[$('diagbody'),$('diagbody-mob')];
+  bodies.forEach(function(b){if(b)b.innerHTML='<div style="font-size:9px;color:var(--acc);font-family:var(--mono);margin-bottom:8px">⟳ Running tests…</div>';});
+  var tests=[
+    ['rss2json (RSS gateway)','https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Ffeeds.feedburner.com%2FTheHackersNews'],
+    ['corsproxy.io → CISA','https://corsproxy.io/?url='+encodeURIComponent('https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json')],
+    ['codetabs.com → CISA','https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent('https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json')],
+    ['cors.eu.org → CISA','https://cors.eu.org/https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'],
+    ['NVD NIST (direct)','https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1'],
+    ['CISA KEV (direct)','https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json'],
+    ['ransomware.live (direct)','https://api.ransomware.live/recentvictims'],
+    ['corsproxy.io → NVD','https://corsproxy.io/?url='+encodeURIComponent('https://services.nvd.nist.gov/rest/json/cves/2.0?resultsPerPage=1')],
+    ['BGPView (direct)','https://api.bgpview.io/country/US'],
+    ['restcountries (direct)','https://restcountries.com/v3.1/alpha/US?fields=name'],
+  ];
+  var rows=['<div style="font-size:7.5px;color:var(--mu);font-family:var(--mono);padding:6px 0;border-bottom:1px solid var(--bd);margin-bottom:6px;line-height:1.7"><div>UA: '+navigator.userAgent.slice(0,80)+'</div><div>URL: '+location.href.slice(0,60)+'</div><div>Online: '+navigator.onLine+' · Protocol: '+location.protocol+'</div></div>'];
+  for(var i=0;i<tests.length;i++){
+    var label=tests[i][0],url=tests[i][1],t0=Date.now();
+    var result;
+    try{var r=await xhrGet(url,12000);var ms=Date.now()-t0;var bt='';try{bt=(await r.text()).slice(0,50);}catch(e){}result={ok:r.ok,msg:'HTTP '+r.status+' · '+ms+'ms · '+bt};}
+    catch(e){result={ok:false,msg:(e.message||'error')+' · '+(Date.now()-t0)+'ms'};}
+    var col=result.ok?'var(--grn)':'var(--red)';
+    rows.push('<div style="padding:5px 0;border-bottom:1px solid rgba(0,200,255,.05)"><div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span style="color:'+col+';font-family:var(--mono);font-size:11px;font-weight:700">'+(result.ok?'✓':'✗')+'</span><span style="font-size:9px;color:var(--tx);font-weight:600">'+label+'</span></div><div style="font-size:7.5px;color:var(--mu);font-family:var(--mono);padding-left:16px;word-break:break-all">'+result.msg+'</div></div>');
+    var prog='<div style="font-size:9px;color:var(--acc);font-family:var(--mono);margin-bottom:8px">⟳ Testing '+(i+1)+'/'+tests.length+'…</div>'+rows.join('');
+    bodies.forEach(function(b){if(b)b.innerHTML=prog;});
+  }
+  var passed=rows.filter(function(r){return r.indexOf('✓')>=0;}).length-1;
+  var sumCol=passed>=6?'var(--grn)':passed>=2?'var(--amb)':'var(--red)';
+  var advice=passed===0?'<div style="margin-top:8px;padding:8px;border-left:2px solid var(--red);background:rgba(255,45,45,.06);font-size:8.5px;color:var(--mu);line-height:1.7"><strong style="color:var(--red)">All blocked.</strong> Open in Chrome, not a file manager.</div>':'<div style="margin-top:8px;padding:8px;border-left:2px solid var(--grn);background:rgba(0,230,118,.05);font-size:8px;color:var(--mu)">✓ passes shown above. App uses these automatically.</div>';
+  var final='<div style="font-size:10px;font-weight:700;color:'+sumCol+';margin-bottom:8px;font-family:var(--mono)">'+(passed>=6?'✓':'~')+' '+passed+'/'+tests.length+' reachable</div>'+rows.join('')+advice+'<button onclick="runDiag()" style="margin-top:10px;font-size:8px;padding:6px 14px;background:var(--acc);color:#000;border:none;border-radius:2px;font-family:var(--mono);cursor:pointer;width:100%">RUN AGAIN</button>';
+  bodies.forEach(function(b){if(b)b.innerHTML=final;});
+}
+
+// ══════════════════════════════════════════════════════════
+// SEED DATA
+// ══════════════════════════════════════════════════════════
+var SEED_EVT=[{iso:'RU',layer:'apt',sev:'critical',lbl:'APT',ts:Date.now()-3600000},{iso:'CN',layer:'apt',sev:'critical',lbl:'APT',ts:Date.now()-5400000},{iso:'UA',layer:'apt',sev:'high',lbl:'Target',ts:Date.now()-7200000},{iso:'IR',layer:'apt',sev:'high',lbl:'APT',ts:Date.now()-9000000},{iso:'KP',layer:'apt',sev:'high',lbl:'DPRK',ts:Date.now()-10800000},{iso:'US',layer:'cve',sev:'critical',lbl:'CVE',ts:Date.now()-1800000},{iso:'DE',layer:'kev',sev:'high',lbl:'KEV',ts:Date.now()-2700000},{iso:'GB',layer:'kev',sev:'high',lbl:'KEV',ts:Date.now()-4500000},{iso:'TW',layer:'apt',sev:'high',lbl:'APT',ts:Date.now()-6300000},{iso:'IL',layer:'apt',sev:'critical',lbl:'APT',ts:Date.now()-8100000}];
+var SEED_FEED=[{layer:'apt',src:'RU',tgt:'UA',col:'#ff2d2d',type_:'Espionage',title:'Russian APT Sandworm targets Ukrainian critical infrastructure',desc:'GRU-linked actors deploying wiper variants against energy sector.',tags:[['Espionage','#ff2d2d'],['SEED','#2a4466']],link:'',fm:'war',ts:'seed'},{layer:'apt',src:'CN',tgt:'TW',col:'#ff6a00',type_:'Espionage',title:'Volt Typhoon pre-positioning detected in Taiwan government networks',desc:'PRC state-sponsored group establishing persistent access.',tags:[['Espionage','#ff6a00'],['SEED','#2a4466']],link:'',fm:'war',ts:'seed'},{layer:'apt',src:'KP',tgt:'US',col:'#c026d3',type_:'Ransomware',title:'Lazarus Group deploys ransomware against US financial institutions',desc:'DPRK cybercriminals using crypto theft to fund weapons programs.',tags:[['Ransomware','#c026d3'],['SEED','#2a4466']],link:'',fm:'beg',ts:'seed'},{layer:'kev',src:'US',tgt:'Global',col:'#c026d3',type_:'CISA KEV',title:'CISA adds Microsoft and Ivanti vulnerabilities to KEV catalog',desc:'Actively exploited flaws in widely deployed enterprise software.',tags:[['EXPLOITED','#ff2d2d'],['SEED','#2a4466']],link:'',fm:'beg',ts:'seed'},{layer:'dw',src:null,tgt:'US',col:'#cc0000',type_:'Dark Web Leak',title:'☠ LockBit publishes 200GB from US healthcare provider',desc:'Ransomware gang leaks patient records after ransom demand refused.',tags:[['☠ LockBit','#cc0000'],['SEED','#2a4466']],link:'',fm:'beg',ts:'seed'},{layer:'apt',src:'IR',tgt:'IL',col:'#ffc200',type_:'Critical Infrastructure',title:'Iranian IRGC-linked group attacks Israeli water infrastructure',desc:'Charming Kitten affiliate targeting industrial control systems.',tags:[['Crit Infra','#ffc200'],['SEED','#2a4466']],link:'',fm:'war',ts:'seed'}];
+
+function loadSeedData(){
+  SEED_EVT.forEach(function(e){addEvt(e.iso,e.layer,e.sev,e.lbl,e.ts);});
+  feedItems=SEED_FEED.slice();feedN=SEED_FEED.length;
+  $('fcnt').textContent=feedN;var fd=$('fcnt-d');if(fd)fd.textContent=feedN;
+  renderFeed();
+  setTimeout(function(){launchArc('RU','UA','#ff2d2d');ping('RU','#ff2d2d',0,false);ping('RU','#ff2d2d',0,true);},600);
+  setTimeout(function(){launchArc('CN','TW','#ff6a00');ping('CN','#ff6a00',0,false);ping('CN','#ff6a00',0,true);},1300);
+  setTimeout(function(){launchArc('KP','US','#c026d3');ping('KP','#c026d3',0,false);ping('KP','#c026d3',0,true);},2100);
+  setTimeout(function(){launchArc('IR','IL','#ffc200');ping('IR','#ffc200',0,false);ping('IR','#ffc200',0,true);},3000);
+  setTimeout(function(){launchArc('RU','DE','#ff2d2d');},3800);
+}
+
+// ══════════════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════════════
+loadSeedData();
+
+(async function(){
+  $('lblive').textContent='LOADING';
+  var results=await Promise.allSettled([loadRSS(),loadNVD(),loadCISA(),loadRW()]);
+  var ok=results.filter(function(r){return r.status==='fulfilled';}).length;
+  if(ok>0){feedItems=feedItems.filter(function(f){return f.ts!=='seed';});feedN=feedItems.length;$('fcnt').textContent=feedN;var fd=$('fcnt-d');if(fd)fd.textContent=feedN;renderFeed();}
+  $('lblive').textContent=ok>=4?'LIVE':ok>=2?'PARTIAL':'DEGRADED';
+  renderMapPanel(false);
+  document.getElementById('st-feed-cnt').style.display='flex';
+  setInterval(loadRSS,600000);setInterval(loadNVD,3600000);setInterval(loadCISA,3600000);setInterval(loadRW,300000);
+})();
 </script>
 </body>
 </html>
